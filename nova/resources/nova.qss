@@ -1,0 +1,543 @@
+/*
+ * Nova — Theme
+ * Compact mode throughout.
+ */
+
+/* ─── Global ─────────────────────────────────────────────── */
+* {
+    font-family: <font_family>;
+    font-size: 13px;
+    outline: none;
+}
+QWidget {
+    background-color: <bg>;
+    color: <fg>;
+    border: none;
+}
+
+/* ─── Scrollbars ─────────────────────────────────────────── */
+QScrollBar:vertical {
+    background: transparent; width: 5px; margin: 0;
+}
+QScrollBar::handle:vertical {
+    background: <bg2>; min-height: 20px; border-radius: 2px;
+}
+QScrollBar::handle:vertical:hover { background: <accent_l1>; }
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
+
+QScrollBar:horizontal {
+    background: transparent; height: 5px; margin: 0;
+}
+QScrollBar::handle:horizontal {
+    background: <bg2>; min-width: 20px; border-radius: 2px;
+}
+QScrollBar::handle:horizontal:hover { background: <accent_l1>; }
+QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0; }
+
+/* ─── Main window ────────────────────────────────────────── */
+QMainWindow, #NovaMainWindow { background-color: <bg>; }
+#CentralWidget { background-color: <bg>; }
+
+/* ─── Sidebar ────────────────────────────────────────────── */
+#Sidebar {
+    background-color: <bg1>;
+    border-right: 1px solid <bg2>;
+}
+#SidebarHeader {
+    background-color: <bg1>;
+    border-bottom: 1px solid <bg2>;
+}
+#SidebarLogo {
+    font-size: 14px;
+    font-weight: 700;
+    color: <accent>;
+    letter-spacing: 2px;
+    background: transparent;
+}
+#HamburgerButton {
+    background: transparent;
+    color: <fg1>;
+    font-size: 15px;
+    border: none;
+    border-radius: 5px;
+    padding: 1px;
+    min-width: 0;
+    min-height: 0;
+}
+#HamburgerButton:hover { background: <accent_ln>; color: <accent>; }
+#SidebarScroll, #SidebarScroll > QWidget > QWidget { background: transparent; }
+#SidebarSeparator {
+    background-color: <bg2>;
+    border: none;
+    margin: 3px 8px;
+}
+
+/* Sidebar items */
+#SidebarItem {
+    background: transparent;
+    border-left: 3px solid transparent;
+    border-radius: 0;
+    margin: 0;
+}
+#SidebarItem:hover { background: <accent_ln>; }
+#SidebarItem[active="true"] {
+    background: <accent_ln>;
+    border-left: 3px solid <accent>;
+}
+#SidebarItemText {
+    font-size: 14px;
+    font-weight: 400;
+    background: transparent;
+}
+
+/* ─── Content area ───────────────────────────────────────── */
+#ContentArea, #PageStack { background: <bg>; }
+#PageHeader {
+    background: <bg>;
+    border-bottom: 1px solid <bg2>;
+}
+#PageHeaderTitle {
+    font-size: 14px;
+    font-weight: 600;
+    color: <fg>;
+}
+
+/* ─── Section title ──────────────────────────────────────── */
+#SectionTitle {
+    font-size: 18px;
+    font-weight: 600;
+    color: <fg>;
+}
+
+/* ─── Home page ──────────────────────────────────────────── */
+#HomePage, #HomeContainer { background: <bg>; }
+#HomeGreeting { font-size: 22px; font-weight: 300; color: <fg>; }
+#HomeSubtitle { font-size: 12px; color: <fg2>; }
+#HomeDescription { font-size: 12px; color: <fg1>; }
+
+#StatCard {
+    background: <bg1>;
+    border: 1px solid <bg2>;
+    border-radius: 10px;
+}
+#StatValue {
+    font-size: 28px;
+    font-weight: 700;
+    color: <accent>;
+    background: transparent;
+}
+#StatTitle {
+    font-size: 10px;
+    font-weight: 600;
+    color: <fg2>;
+    letter-spacing: 1px;
+    background: transparent;
+}
+
+/* ─── Settings page ──────────────────────────────────────── */
+#SettingsPage, #SettingsContainer { background: <bg>; }
+#SettingSectionWrapper { background: transparent; }
+
+/* Section group title — sits ABOVE the card */
+#SectionGroupTitle {
+    font-size: 10px;
+    font-weight: 700;
+    color: <fg2>;
+    letter-spacing: 1px;
+    background: transparent;
+    padding-left: 4px;
+    padding-bottom: 2px;
+}
+
+/* Setting card — replaces QGroupBox */
+#SettingCard {
+    background-color: <bg1>;
+    border: 1px solid <bg2>;
+    border-radius: 10px;
+}
+
+#SettingRow { background: transparent; }
+#SettingRowRight { background: transparent; }
+#SettingRowSep {
+    background: <bg2>;
+    border: none;
+    max-height: 1px;
+    margin: 0 14px;
+}
+#SettingName {
+    font-size: 13px;
+    font-weight: 500;
+    color: <fg>;
+    background: transparent;
+}
+#SettingDesc {
+    font-size: 11px;
+    color: <fg2>;
+    background: transparent;
+}
+#SettingEdit {
+    background: <bg>;
+    border: 1px solid <bg2>;
+    border-radius: 6px;
+    padding: 4px 10px;
+    color: <fg>;
+    min-height: 28px;
+    max-height: 28px;
+}
+#SettingEdit:focus { border-color: <accent>; }
+
+#SettingCombo {
+    background: <bg>;
+    border: 1px solid <bg2>;
+    border-radius: 6px;
+    padding: 4px 10px;
+    color: <fg>;
+    min-height: 28px;
+    max-height: 28px;
+}
+#SettingCombo:hover, #SettingCombo:focus { border-color: <accent>; }
+
+#SettingCombo::drop-down {
+    border: none;
+    width: 28px;
+    border-top-right-radius: 6px;
+    border-bottom-right-radius: 6px;
+}
+#SettingCombo::down-arrow {
+    image: url("<url_down_arrow>");
+    width: 16px;
+    height: 16px;
+}
+
+#SettingSpinbox {
+    background: <bg>;
+    border: 1px solid <bg2>;
+    border-radius: 6px;
+    padding: 4px 10px;
+    min-height: 28px;
+    max-height: 28px;
+    color: <fg>;
+}
+#SettingSpinbox:focus { border-color: <accent>; }
+#SettingSpinbox::up-button {
+    subcontrol-origin: border;
+    subcontrol-position: top right;
+    width: 22px;
+    border: none;
+    background: transparent;
+    border-top-right-radius: 6px;
+}
+#SettingSpinbox::down-button {
+    subcontrol-origin: border;
+    subcontrol-position: bottom right;
+    width: 22px;
+    border: none;
+    background: transparent;
+    border-bottom-right-radius: 6px;
+}
+#SettingSpinbox::up-arrow {
+    image: url(<url_up_arrow>);
+    width: 14px;
+    height: 14px;
+}
+#SettingSpinbox::down-arrow {
+    image: url(<url_down_arrow>);
+    width: 14px;
+    height: 14px;
+}
+
+#ColorPickerButton {
+    border: none;
+    border-radius: 14px;
+    min-height: 28px;
+    max-height: 28px;
+    min-width: 100px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+#BrowseButton {
+    background: <accent>;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 4px 14px;
+    min-width: 80px;
+    min-height: 28px;
+    max-height: 28px;
+    font-size: 12px;
+    font-weight: 500;
+}
+#BrowseButton:hover { background: <accent_d1>; }
+
+/* ─── About page ─────────────────────────────────────────── */
+#AboutPage { background: <bg>; }
+#AboutCard {
+    background: <bg1>;
+    border: 1px solid <bg2>;
+    border-radius: 14px;
+}
+#AboutAppName {
+    font-size: 28px;
+    font-weight: 700;
+    color: <accent>;
+    letter-spacing: 4px;
+    background: transparent;
+}
+#AboutVersion { font-size: 12px; color: <fg2>; background: transparent; }
+#AboutSeparator { background: <bg2>; border: none; max-height: 1px; }
+#AboutDescription { font-size: 12px; color: <fg1>; background: transparent; }
+#AboutLicense { font-size: 11px; color: <fg2>; background: transparent; }
+
+/* ─── Plugins page ───────────────────────────────────────── */
+#PluginsPage, #PluginsContainer { background: <bg>; }
+#PluginCard {
+    background: <bg1>;
+    border: 1px solid <bg2>;
+    border-radius: 10px;
+    min-height: 120px;
+}
+#PluginCard:hover { border-color: <accent_l1>; }
+#PluginCardName {
+    font-size: 13px;
+    font-weight: 600;
+    color: <fg>;
+    background: transparent;
+}
+#PluginCardVersion { font-size: 10px; color: <fg2>; background: transparent; }
+#PluginCardDesc { font-size: 12px; color: <fg1>; background: transparent; }
+#PluginCardAuthor { font-size: 11px; color: <fg2>; font-style: italic; background: transparent; }
+#PluginStatusLabel { font-size: 11px; background: transparent; padding: 1px 5px; border-radius: 3px; }
+
+/* Plugin action buttons */
+#PluginStartButton {
+    background: <accent>;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 4px 10px;
+    font-weight: 500;
+    min-height: 0; min-width: 0;
+}
+#PluginStartButton:hover   { background: <accent_d1>; }
+#PluginStartButton:disabled { background: <bg2>; color: <fg2>; }
+
+#PluginStopButton {
+    background: transparent;
+    color: #EF4444;
+    border: 1px solid #EF4444;
+    border-radius: 5px;
+    padding: 4px 10px;
+    font-weight: 500;
+    min-height: 0; min-width: 0;
+}
+#PluginStopButton:hover    { background: #FEF2F2; }
+#PluginStopButton:disabled { color: <fg2>; border-color: <bg2>; background: transparent; }
+
+#PluginViewButton {
+    background: transparent;
+    color: <accent>;
+    border: 1px solid <accent_l2>;
+    border-radius: 5px;
+    padding: 4px 10px;
+    font-weight: 500;
+    min-height: 0; min-width: 0;
+}
+#PluginViewButton:hover    { background: <accent_ln>; border-color: <accent_l1>; }
+#PluginViewButton:disabled { color: <fg2>; border-color: <bg2>; }
+
+/* ─── Plugin widget pages ────────────────────────────────── */
+#ClockFrame, #SysMonFrame { background: <bg>; }
+#ClockLabel    { color: <fg>; background: transparent; }
+#ClockSubtitle { color: <fg2>; background: transparent; }
+#SysMonTitle   { font-size: 16px; font-weight: 600; color: <fg>; background: transparent; }
+#StatBarName   { font-size: 12px; color: <fg>; background: transparent; }
+#StatBarPct    { font-size: 12px; font-weight: 600; color: <accent>; background: transparent; }
+#StatProgressBar {
+    background: <bg2>;
+    border-radius: 3px;
+    border: none;
+    max-height: 6px;
+    min-height: 6px;
+}
+#StatProgressBar::chunk { background: <accent>; border-radius: 3px; }
+
+/* ─── Log page ───────────────────────────────────────────── */
+#LogPage { background: <bg>; }
+#LogView {
+    background: <bg1>;
+    border: 1px solid <bg2>;
+    border-radius: 8px;
+    color: <fg>;
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 11px;
+    padding: 8px;
+}
+#LogFilterLabel { color: <fg2>; font-size: 12px; background: transparent; }
+#LogLevelCombo {
+    background: <bg1>;
+    border: 1px solid <bg2>;
+    border-radius: 5px;
+    padding: 3px 7px;
+    min-height: 26px;
+    color: <fg>;
+}
+#LogClearButton {
+    background: transparent;
+    color: <fg2>;
+    border: 1px solid <bg2>;
+    border-radius: 5px;
+    padding: 3px 10px;
+    min-height: 26px;
+    min-width: 0;
+}
+#LogClearButton:hover { background: <accent_ln>; color: <accent>; border-color: <accent_l1>; }
+
+/* ─── Toolbar buttons ────────────────────────────────────── */
+#ToolbarButton {
+    background: <accent_ln>;
+    color: <accent>;
+    border: 1px solid <accent_l2>;
+    border-radius: 5px;
+    padding: 4px 12px;
+    font-weight: 500;
+    min-height: 26px;
+    min-width: 70px;
+}
+#ToolbarButton:hover   { background: <accent_l1>; border-color: <accent>; }
+#ToolbarButton:pressed { background: <accent_l2>; }
+
+/* Small icon buttons */
+#IconButton {
+    background: transparent;
+    border: none;
+    border-radius: 5px;
+    padding: 1px;
+    min-width: 0; min-height: 0;
+}
+#IconButton:hover { background: <accent_ln>; }
+
+#FavoriteButton {
+    background: transparent;
+    border: none;
+    border-radius: 5px;
+    padding: 1px;
+    min-width: 0; min-height: 0;
+}
+#FavoriteButton:hover { background: <accent_ln>; }
+
+#DeleteButton {
+    background: transparent;
+    border: none;
+    border-radius: 5px;
+    padding: 1px;
+    min-width: 0; min-height: 0;
+}
+#DeleteButton:hover { background: #FEF2F2; }
+
+/* ─── Generic controls ───────────────────────────────────── */
+QPushButton {
+    background: <accent_ln>;
+    color: <accent_d2>;
+    border: 1px solid <accent_l2>;
+    border-radius: 5px;
+    padding: 4px 12px;
+    min-height: 26px;
+    min-width: 50px;
+    font-weight: 500;
+}
+QPushButton:hover   { background: <accent_l3>; border-color: <accent_l1>; }
+QPushButton:pressed { background: <accent_l2>; }
+QPushButton:disabled { background: <bg2>; color: <fg2>; border-color: <bg2>; }
+
+QComboBox {
+    background: <bg1>;
+    border: 1px solid <bg2>;
+    border-radius: 5px;
+    padding: 3px 7px;
+    min-height: 26px;
+    color: <fg>;
+}
+QComboBox:hover, QComboBox:focus { border-color: <accent>; }
+QComboBox::drop-down { border: none; width: 24px; }
+QComboBox::down-arrow {
+    image: url(<url_down_arrow>);
+    width: 16px;
+    height: 16px;
+}
+QComboBox QAbstractItemView {
+    background: <bg1>;
+    border: 1px solid <bg2>;
+    selection-background-color: <accent_ln>;
+    selection-color: <accent>;
+    color: <fg>;
+    outline: none;
+    padding: 4px;
+}
+QComboBox QAbstractItemView::item {
+    padding: 5px 10px;
+    min-height: 26px;
+}
+QComboBox QAbstractItemView::item:selected {
+    background: <accent_ln>;
+    color: <accent>;
+}
+
+QLineEdit {
+    background: <bg1>;
+    border: 1px solid <bg2>;
+    border-radius: 5px;
+    padding: 3px 7px;
+    min-height: 26px;
+    color: <fg>;
+}
+QLineEdit:focus { border-color: <accent>; }
+QLineEdit:disabled { background: <bg2>; color: <fg2>; }
+
+QGroupBox {
+    background: <bg1>;
+    border: 1px solid <bg2>;
+    border-radius: 7px;
+    margin-top: 10px;
+    padding-top: 6px;
+    font-weight: 600;
+    color: <fg1>;
+}
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    left: 12px;
+    padding: 0 5px;
+    color: <fg2>;
+    font-size: 10px;
+}
+
+QToolTip {
+    background: <bg1>;
+    border: 1px solid <bg2>;
+    border-radius: 5px;
+    color: <fg>;
+    padding: 3px 7px;
+    font-size: 12px;
+}
+
+QCheckBox {
+    background: transparent;
+    spacing: 6px;
+}
+QCheckBox::indicator {
+    width: 16px;
+    height: 16px;
+    border: 2px solid <bg2>;
+    border-radius: 4px;
+    background: <bg>;
+}
+QCheckBox::indicator:hover { border-color: <accent_l1>; }
+QCheckBox::indicator:checked {
+    width: 16px;
+    height: 16px;
+    background: <accent>;
+    border: 2px solid <accent>;
+    border-radius: 4px;
+    image: url(<url_check>);
+}
