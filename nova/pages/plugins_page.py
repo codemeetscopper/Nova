@@ -42,7 +42,7 @@ def _accent_color() -> str:
         return "#0088CC"
 
 
-def _render_plugin_icon(icon_str: str, color: str, size: int = 32):
+def _render_plugin_icon(icon_str: str, color: str, size: int = 20):
     try:
         from nova.core.icons import IconManager
         if icon_str.strip().startswith("<"):
@@ -174,19 +174,19 @@ class PluginCard(QFrame):
         self._icon_str = manifest.icon or ""
 
         self.setObjectName("PluginCard")
-        self.setFrameShape(QFrame.StyledPanel)
+        self.setFrameShape(QFrame.NoFrame)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
         v = QVBoxLayout(self)
-        v.setContentsMargins(14, 10, 14, 10)
-        v.setSpacing(5)
+        v.setContentsMargins(16, 10, 16, 14)
+        v.setSpacing(6)
 
         # ── Header ───────────────────────────────────────────
         header = QHBoxLayout()
-        header.setSpacing(8)
+        header.setSpacing(10)
 
         self._icon_lbl = QLabel()
-        self._icon_lbl.setFixedSize(32, 32)
+        self._icon_lbl.setFixedSize(20, 20)
         self._icon_lbl.setAlignment(Qt.AlignCenter)
         self._icon_lbl.setStyleSheet("background: transparent;")
 
@@ -196,19 +196,13 @@ class PluginCard(QFrame):
         ver_lbl = QLabel(f"v{manifest.version}")
         ver_lbl.setObjectName("PluginCardVersion")
 
-        self._status_lbl = QLabel("Stopped")
+        self._status_lbl = QLabel("Offline")
         self._status_lbl.setObjectName("PluginStatusLabel")
-
-        self._fav_btn = QPushButton()
-        self._fav_btn.setFixedSize(24, 24)
-        self._fav_btn.setObjectName("FavoriteButton")
-        self._fav_btn.clicked.connect(self._on_favorite_clicked)
 
         header.addWidget(self._icon_lbl)
         header.addWidget(name_lbl, 1)
         header.addWidget(self._status_lbl)
         header.addWidget(ver_lbl)
-        header.addWidget(self._fav_btn)
         v.addLayout(header)
 
         # ── Description ───────────────────────────────────────
@@ -218,13 +212,48 @@ class PluginCard(QFrame):
         v.addWidget(desc)
 
         if manifest.author:
-            author = QLabel(f"by {manifest.author}")
+            author = QLabel(f"By {manifest.author}")
             author.setObjectName("PluginCardAuthor")
             v.addWidget(author)
 
-        # ── Primary buttons ───────────────────────────────────
-        primary = QHBoxLayout()
-        primary.setSpacing(6)
+        v.addStretch()
+
+        # ── Bottom bar: secondary icons left, primary buttons right ──
+        bottom = QHBoxLayout()
+        bottom.setSpacing(4)
+
+        self._reload_btn = _make_icon_btn("action_autorenew", "Reload plugin")
+        self._reload_btn.clicked.connect(lambda: self.reload_clicked.emit(manifest.id))
+
+        self._export_btn = _make_icon_btn("action_backup", "Export as .zip")
+        self._export_btn.clicked.connect(lambda: self.export_clicked.emit(manifest.id))
+
+        self._info_btn = _make_icon_btn("action_info", "Plugin info")
+        self._info_btn.clicked.connect(lambda: self.info_clicked.emit(manifest.id))
+
+        self._fav_btn = QPushButton()
+        self._fav_btn.setFixedSize(26, 26)
+        self._fav_btn.setObjectName("FavoriteButton")
+        self._fav_btn.clicked.connect(self._on_favorite_clicked)
+
+        self._delete_btn = _make_icon_btn("action_delete", "Delete plugin")
+        self._delete_btn.setObjectName("DeleteButton")
+        self._delete_btn.clicked.connect(lambda: self.delete_clicked.emit(manifest.id))
+
+        # Store for refresh
+        self._secondary_btns: List[Tuple[QPushButton, str]] = [
+            (self._reload_btn, "action_autorenew"),
+            (self._export_btn, "action_backup"),
+            (self._info_btn,   "action_info"),
+            (self._delete_btn, "action_delete"),
+        ]
+
+        bottom.addWidget(self._reload_btn)
+        bottom.addWidget(self._export_btn)
+        bottom.addWidget(self._info_btn)
+        bottom.addWidget(self._delete_btn)
+        bottom.addWidget(self._fav_btn)
+        bottom.addStretch()
 
         self._start_btn = QPushButton("Start")
         self._start_btn.setObjectName("PluginStartButton")
@@ -243,46 +272,13 @@ class PluginCard(QFrame):
         self._view_btn.setEnabled(False)
         self._view_btn.clicked.connect(lambda: self.view_clicked.emit(manifest.id))
 
-        primary.addWidget(self._start_btn)
-        primary.addWidget(self._stop_btn)
-        primary.addWidget(self._view_btn)
-        primary.addStretch()
-        v.addLayout(primary)
-
-        # ── Secondary icon buttons ────────────────────────────
-        secondary = QHBoxLayout()
-        secondary.setSpacing(2)
-
-        self._reload_btn = _make_icon_btn("action_autorenew", "Reload plugin")
-        self._reload_btn.clicked.connect(lambda: self.reload_clicked.emit(manifest.id))
-
-        self._export_btn = _make_icon_btn("action_backup", "Export as .zip")
-        self._export_btn.clicked.connect(lambda: self.export_clicked.emit(manifest.id))
-
-        self._delete_btn = _make_icon_btn("action_delete", "Delete plugin")
-        self._delete_btn.setObjectName("DeleteButton")
-        self._delete_btn.clicked.connect(lambda: self.delete_clicked.emit(manifest.id))
-
-        self._info_btn = _make_icon_btn("action_info", "Plugin info")
-        self._info_btn.clicked.connect(lambda: self.info_clicked.emit(manifest.id))
-
-        # Store for refresh
-        self._secondary_btns: List[Tuple[QPushButton, str]] = [
-            (self._reload_btn, "action_autorenew"),
-            (self._export_btn, "action_backup"),
-            (self._delete_btn, "action_delete"),
-            (self._info_btn,   "action_info"),
-        ]
-
-        secondary.addStretch()
-        secondary.addWidget(self._reload_btn)
-        secondary.addWidget(self._export_btn)
-        secondary.addWidget(self._delete_btn)
-        secondary.addWidget(self._info_btn)
-        v.addLayout(secondary)
+        bottom.addWidget(self._start_btn)
+        bottom.addWidget(self._stop_btn)
+        bottom.addWidget(self._view_btn)
+        v.addLayout(bottom)
 
         # Initial state
-        self._apply_status("Stopped", _fg2_color())
+        self._apply_status("Offline", _fg2_color())
         self._update_fav_icon()
 
     # ── Public API ────────────────────────────────────────────
@@ -292,9 +288,9 @@ class PluginCard(QFrame):
         self._stop_btn.setEnabled(active)
         self._view_btn.setEnabled(active)
         if active:
-            self._apply_status("Running", _COLOR_RUNNING)
+            self._apply_status("Online", _COLOR_RUNNING)
         else:
-            self._apply_status("Stopped", _fg2_color())
+            self._apply_status("Offline", _fg2_color())
 
     def set_crashed(self):
         self._start_btn.setEnabled(True)
@@ -315,13 +311,13 @@ class PluginCard(QFrame):
     # ── Internal ──────────────────────────────────────────────
 
     def _apply_status(self, text: str, color: str) -> None:
-        px = _render_plugin_icon(self._icon_str, color, 28)
+        px = _render_plugin_icon(self._icon_str, color, 20)
         if px and not px.isNull():
             self._icon_lbl.setPixmap(px)
         else:
             self._icon_lbl.setText("?")
         self._status_lbl.setText(text)
-        weight = "600" if text != "Stopped" else "400"
+        weight = "600" if text != "Offline" else "400"
         self._status_lbl.setStyleSheet(
             f"color: {color}; font-size: 11px; font-weight: {weight}; background: transparent;"
         )

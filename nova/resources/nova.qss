@@ -101,6 +101,16 @@ QMainWindow, #NovaMainWindow { background-color: <bg>; }
     font-weight: 600;
     color: <fg>;
 }
+#HeaderStatusDot {
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+}
+#HeaderStatusLabel {
+    font-size: 11px;
+    font-weight: 500;
+    background: transparent;
+}
 
 /* ─── Section title ──────────────────────────────────────── */
 #SectionTitle {
@@ -293,11 +303,10 @@ QMainWindow, #NovaMainWindow { background-color: <bg>; }
 #PluginsPage, #PluginsContainer { background: <bg>; }
 #PluginCard {
     background: <bg1>;
-    border: 1px solid <bg2>;
+    border: none;
     border-radius: 10px;
-    min-height: 120px;
+    min-height: 130px;
 }
-#PluginCard:hover { border-color: <accent_l1>; }
 #PluginCardName {
     font-size: 13px;
     font-weight: 600;
@@ -305,46 +314,46 @@ QMainWindow, #NovaMainWindow { background-color: <bg>; }
     background: transparent;
 }
 #PluginCardVersion { font-size: 10px; color: <fg2>; background: transparent; }
-#PluginCardDesc { font-size: 12px; color: <fg1>; background: transparent; }
-#PluginCardAuthor { font-size: 11px; color: <fg2>; font-style: italic; background: transparent; }
+#PluginCardDesc { font-size: 12px; color: <fg1>; background: transparent; padding-left: 10px; padding-top: 6px; }
+#PluginCardAuthor { font-size: 11px; color: <fg2>; background: transparent; padding-left: 10px; }
 #PluginStatusLabel { font-size: 11px; background: transparent; padding: 1px 5px; border-radius: 3px; }
 
 /* Plugin action buttons */
 #PluginStartButton {
-    background: <accent>;
-    color: white;
+    background: transparent;
+    color: <accent>;
     border: none;
     border-radius: 5px;
     padding: 4px 10px;
     font-weight: 500;
     min-height: 0; min-width: 0;
 }
-#PluginStartButton:hover   { background: <accent_d1>; }
-#PluginStartButton:disabled { background: <bg2>; color: <fg2>; }
+#PluginStartButton:hover   { background: <accent_ln>; }
+#PluginStartButton:disabled { color: <fg2>; }
 
 #PluginStopButton {
     background: transparent;
     color: #EF4444;
-    border: 1px solid #EF4444;
+    border: none;
     border-radius: 5px;
     padding: 4px 10px;
     font-weight: 500;
     min-height: 0; min-width: 0;
 }
 #PluginStopButton:hover    { background: #FEF2F2; }
-#PluginStopButton:disabled { color: <fg2>; border-color: <bg2>; background: transparent; }
+#PluginStopButton:disabled { color: <fg2>; background: transparent; }
 
 #PluginViewButton {
     background: transparent;
     color: <accent>;
-    border: 1px solid <accent_l2>;
+    border: none;
     border-radius: 5px;
     padding: 4px 10px;
     font-weight: 500;
     min-height: 0; min-width: 0;
 }
-#PluginViewButton:hover    { background: <accent_ln>; border-color: <accent_l1>; }
-#PluginViewButton:disabled { color: <fg2>; border-color: <bg2>; }
+#PluginViewButton:hover    { background: <accent_ln>; }
+#PluginViewButton:disabled { color: <fg2>; }
 
 /* ─── Plugin widget pages ────────────────────────────────── */
 #ClockFrame, #SysMonFrame { background: <bg>; }
@@ -370,7 +379,7 @@ QMainWindow, #NovaMainWindow { background-color: <bg>; }
     border-radius: 8px;
     color: <fg>;
     font-family: "Consolas", "Courier New", monospace;
-    font-size: 11px;
+    font-size: 12px;
     padding: 8px;
 }
 #LogFilterLabel { color: <fg2>; font-size: 12px; background: transparent; }
@@ -439,10 +448,11 @@ QMainWindow, #NovaMainWindow { background-color: <bg>; }
 QPushButton {
     background: <accent_ln>;
     color: <accent_d2>;
-    border: 1px solid <accent_l2>;
+    border: 0px solid <accent_l2>;
     border-radius: 5px;
-    padding: 4px 12px;
-    min-height: 26px;
+    padding: 4px 5px;
+    min-height: 2px;
+    max-height: 26px;
     min-width: 50px;
     font-weight: 500;
 }

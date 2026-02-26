@@ -15,6 +15,9 @@ from nova.ui.sidebar import Sidebar
 
 _log = logging.getLogger(__name__)
 
+_COLOR_RUNNING = "#22C55E"
+_COLOR_OFFLINE = "#888888"
+
 
 class PageHeader(QWidget):
     def __init__(self, parent: QWidget | None = None):
@@ -24,16 +27,44 @@ class PageHeader(QWidget):
 
         layout = QHBoxLayout(self)
         layout.setContentsMargins(20, 0, 20, 0)
-        layout.setSpacing(0)
+        layout.setSpacing(8)
 
         self._title = QLabel()
         self._title.setObjectName("PageHeaderTitle")
         self._title.setAlignment(Qt.AlignVCenter | Qt.AlignLeft)
         layout.addWidget(self._title)
+
         layout.addStretch()
+
+        self._status_dot = QLabel()
+        self._status_dot.setFixedSize(8, 8)
+        self._status_dot.setObjectName("HeaderStatusDot")
+        self._status_dot.hide()
+        layout.addWidget(self._status_dot, 0, Qt.AlignVCenter)
+
+        self._status_label = QLabel()
+        self._status_label.setObjectName("HeaderStatusLabel")
+        self._status_label.hide()
+        layout.addWidget(self._status_label, 0, Qt.AlignVCenter)
 
     def set_title(self, title: str):
         self._title.setText(title)
+
+    def set_status(self, text: str | None, color: str | None = None):
+        """Show or hide a status indicator next to the title."""
+        if text is None:
+            self._status_dot.hide()
+            self._status_label.hide()
+            return
+        self._status_dot.setStyleSheet(
+            f"background-color: {color or '#888'}; border-radius: 4px; border: none;"
+        )
+        self._status_label.setText(text)
+        self._status_label.setStyleSheet(
+            f"color: {color or '#888'}; font-size: 11px; font-weight: 500; background: transparent;"
+        )
+        self._status_dot.show()
+        self._status_label.show()
 
 
 class MainWindow(QMainWindow):
@@ -120,6 +151,15 @@ class MainWindow(QMainWindow):
     def add_separator(self):
         self._sidebar.add_separator()
 
+    def update_plugin_status(self, plugin_id: str, active: bool):
+        """Update the header status indicator if we're currently viewing this plugin."""
+        page_id = f"plugin_{plugin_id}"
+        if self._current == page_id:
+            if active:
+                self._header.set_status("Online", _COLOR_RUNNING)
+            else:
+                self._header.set_status("Offline", _COLOR_OFFLINE)
+
     def navigate(self, page_id: str):
         entry = self._pages.get(page_id)
         if entry is None:
@@ -129,3 +169,13 @@ class MainWindow(QMainWindow):
         self._header.set_title(title)
         self._sidebar.set_active(page_id)
         self._current = page_id
+
+        # Show status indicator for plugin pages
+        if page_id.startswith("plugin_") and self._pm:
+            pid = page_id[len("plugin_"):]
+            if self._pm.is_active(pid):
+                self._header.set_status("Online", _COLOR_RUNNING)
+            else:
+                self._header.set_status("Offline", _COLOR_OFFLINE)
+        else:
+            self._header.set_status(None)

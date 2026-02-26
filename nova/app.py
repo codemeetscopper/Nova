@@ -61,6 +61,11 @@ def _wire_pm_signals(pm, home, window, plugins_pg, settings) -> None:
     pm.plugin_imported.connect(_update_home)
     _update_home()
 
+    # Update page header status indicator when plugin state changes
+    pm.plugin_started.connect(lambda pid: window.update_plugin_status(pid, True))
+    pm.plugin_stopped.connect(lambda pid: window.update_plugin_status(pid, False))
+    pm.plugin_crashed.connect(lambda pid, _msg: window.update_plugin_status(pid, False))
+
     def _on_navigate(pid: str):
         if f"plugin_{pid}" in window._pages:
             window.navigate(f"plugin_{pid}")

@@ -50,7 +50,7 @@ class AboutPage(QWidget):
 
         desc = QLabel(
             "Nova is a futuristic, plugin-driven application platform\n"
-            "built on PySide6 and the Qt-Pop theming toolkit.\n\n"
+            "built on PySide6.\n\n"
             "Each plugin runs in an isolated subprocess for\n"
             "maximum stability and security."
         )
