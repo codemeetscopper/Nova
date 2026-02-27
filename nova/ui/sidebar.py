@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Dict, Optional
 
-from PySide6.QtCore import QEasingCurve, QPropertyAnimation, Qt, Signal
+from PySide6.QtCore import QEasingCurve, QPropertyAnimation, QSize, Qt, Signal
 from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (
     QFrame, QHBoxLayout, QLabel, QPushButton, QScrollArea,
@@ -78,8 +78,17 @@ class SidebarItem(QWidget):
         self._text.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         self._text.setAlignment(Qt.AlignVCenter | Qt.AlignLeft)
 
+        # Detached indicator (small icon shown when plugin is undocked)
+        self._detached_indicator = QLabel()
+        self._detached_indicator.setObjectName("SidebarDetachedIndicator")
+        self._detached_indicator.setFixedSize(14, 14)
+        self._detached_indicator.setAlignment(Qt.AlignCenter)
+        self._detached_indicator.hide()
+        self._is_detached = False
+
         self._layout.addWidget(self._icon)
         self._layout.addWidget(self._text)
+        self._layout.addWidget(self._detached_indicator)
 
         self._apply_inactive_style()
 
@@ -115,9 +124,35 @@ class SidebarItem(QWidget):
             self._apply_active_style()
         else:
             self._apply_inactive_style()
+        if self._is_detached:
+            self._update_detached_icon()
 
     def is_active(self) -> bool:
         return self._active
+
+    def set_detached(self, detached: bool):
+        self._is_detached = detached
+        if detached:
+            self._update_detached_icon()
+            self._detached_indicator.show()
+        else:
+            self._detached_indicator.hide()
+
+    def _update_detached_icon(self):
+        try:
+            from nova.core.icons import IconManager
+            color = _accent_color() if self._active else _fg1_color()
+            px = IconManager.get_pixmap("open_in_new", color, 12)
+            if px and not px.isNull():
+                self._detached_indicator.setPixmap(px)
+                self._detached_indicator.setStyleSheet("background: transparent;")
+                return
+        except Exception:
+            pass
+        self._detached_indicator.setText("⇱")
+        self._detached_indicator.setStyleSheet(
+            f"font-size: 9px; color: {_fg1_color()}; background: transparent;"
+        )
 
     # ──────────────────────────────────────────────────────
     #  Internal
@@ -307,6 +342,12 @@ class Sidebar(QFrame):
     def set_active(self, item_id: str):
         for sid, item in self._items.items():
             item.set_active(sid == item_id)
+
+    def set_detached(self, item_id: str, detached: bool):
+        """Mark a sidebar item as detached (undocked to its own window)."""
+        item = self._items.get(item_id)
+        if item is not None:
+            item.set_detached(detached)
 
     def refresh_colors(self):
         """Re-render all item icons/text with up-to-date theme colours.

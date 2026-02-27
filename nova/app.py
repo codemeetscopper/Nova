@@ -67,14 +67,15 @@ def _wire_pm_signals(pm, home, window, plugins_pg, settings) -> None:
     pm.plugin_crashed.connect(lambda pid, _msg: window.update_plugin_status(pid, False))
 
     def _on_navigate(pid: str):
-        if f"plugin_{pid}" in window._pages:
-            window.navigate(f"plugin_{pid}")
+        page_id = f"plugin_{pid}"
+        if page_id in window._pages or window.is_detached(page_id):
+            window.navigate(page_id)
 
     plugins_pg.navigate_to_plugin.connect(_on_navigate)
 
     def _on_favorite_changed(pid: str, is_fav: bool):
         page_id = f"plugin_{pid}"
-        if page_id not in window._pages:
+        if page_id not in window._pages and not window.is_detached(page_id):
             return
         record = pm._records.get(pid)
         if record is None:
@@ -111,6 +112,8 @@ def _wire_pm_signals(pm, home, window, plugins_pg, settings) -> None:
 def _do_plugin_hot_reload(ctx, new_path_str: str, old_pm,
                           window, plugins_pg, settings, home) -> PluginManager:
     old_pm.stop_all()
+    # Dock all detached windows before reload
+    window.dock_all()
     for pid in list(window._pages.keys()):
         if pid.startswith("plugin_"):
             window.remove_plugin_page(pid)
@@ -207,9 +210,11 @@ def run(ctx) -> None:
     plugins_pg.refresh()
     _wire_pm_signals(pm, home, window, plugins_pg, settings)
 
-    # ── Style change: sidebar + plugin cards + plugin instances ───────────
+    # ── Style change: sidebar + plugin cards + plugin instances + detached ──
     def _on_style_changed():
         window._sidebar.refresh_colors()
+        window._header.refresh_undock_icon()
+        window.refresh_detached_themes()
         plugins_pg.refresh_icons()
         _cascade_theme_to_plugins(pm, ctx)
 

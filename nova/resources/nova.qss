@@ -444,6 +444,56 @@ QMainWindow, #NovaMainWindow { background-color: <bg>; }
 }
 #DeleteButton:hover { background: #FEF2F2; }
 
+/* ─── Undock button (page header) ────────────────────────── */
+#UndockButton {
+    background: transparent;
+    border: none;
+    border-radius: 5px;
+    padding: 2px;
+    min-width: 0; min-height: 0;
+}
+#UndockButton:hover { background: <accent_ln>; }
+
+/* ─── Detached plugin window ────────────────────────────── */
+#DetachedPluginWindow {
+    background: <bg>;
+}
+#DetachedToolbar {
+    background: <bg1>;
+    border: none;
+}
+#DetachedStatusDot {
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+}
+#DetachedStatusLabel {
+    font-size: 11px;
+    font-weight: 500;
+    background: transparent;
+}
+#DetachedHeaderSep {
+    background: <bg2>;
+    border: none;
+}
+#DetachedDockButton {
+    background: <accent_ln>;
+    color: <accent>;
+    border: none;
+    border-radius: 5px;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 500;
+    min-width: 0; min-height: 0;
+}
+#DetachedDockButton:hover { background: <accent_l3>; }
+
+/* Sidebar detached indicator */
+#SidebarDetachedIndicator {
+    background: transparent;
+    border: none;
+}
+
 /* ─── Generic controls ───────────────────────────────────── */
 QPushButton {
     background: <accent_ln>;

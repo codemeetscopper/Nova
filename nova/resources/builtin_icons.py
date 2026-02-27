@@ -142,6 +142,34 @@ ICONS: dict[str, str] = {
         'M12 18.17L8.83 15l-1.41 1.41L12 21l4.59-4.59L15.17 15 12 18.17z"/>'
         "</svg>"
     ),
+    # ── Window management ──────────────────────────────────────────────────
+    "open_in_new": (
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">'
+        '<path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14'
+        'c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41'
+        'L19 6.41V10h2V3h-7z"/>'
+        "</svg>"
+    ),
+    "dock_window": (
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">'
+        '<path d="M21 11l-6-6v5H4v2h11v5l6-6z"/>'
+        "</svg>"
+    ),
+    "minimize": (
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">'
+        '<path d="M6 19h12v2H6z"/>'
+        "</svg>"
+    ),
+    "maximize": (
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">'
+        '<path d="M3 3h18v18H3V3zm2 2v14h14V5H5z"/>'
+        "</svg>"
+    ),
+    "restore": (
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">'
+        '<path d="M4 8h4V4h12v12h-4v4H4V8zm12 0v6h2V6H10v2h6zm-2 10V10H6v8h8z"/>'
+        "</svg>"
+    ),
 }
 
 # Backward-compatibility aliases — existing code uses "action_*" / "navigation_*" prefixes
