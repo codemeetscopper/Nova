@@ -1,7 +1,7 @@
 """
 PDF Merger Plugin
 =================
-Host side: UI with table for adding PDFs, page selection, and merge button.
+Host side: UI with table for adding PDFs, page selection, reordering, and merge.
 Worker side: idle (no background work needed — merging is triggered on demand).
 """
 from __future__ import annotations
@@ -50,6 +50,20 @@ class Plugin(PluginBase):
         btn_clear.clicked.connect(self._clear_list)
         toolbar.addWidget(btn_clear)
 
+        toolbar.addSpacing(12)
+
+        btn_up = QPushButton("Move Up")
+        btn_up.setObjectName("PdfMergerMoveUp")
+        btn_up.setCursor(Qt.PointingHandCursor)
+        btn_up.clicked.connect(self._move_up)
+        toolbar.addWidget(btn_up)
+
+        btn_down = QPushButton("Move Down")
+        btn_down.setObjectName("PdfMergerMoveDown")
+        btn_down.setCursor(Qt.PointingHandCursor)
+        btn_down.clicked.connect(self._move_down)
+        toolbar.addWidget(btn_down)
+
         toolbar.addStretch()
 
         btn_merge = QPushButton("Merge")
@@ -63,6 +77,8 @@ class Plugin(PluginBase):
         # Table
         self._table = QTableWidget(0, 3)
         self._table.setObjectName("PdfMergerTable")
+        self._table.setSelectionBehavior(QTableWidget.SelectRows)
+        self._table.setSelectionMode(QTableWidget.SingleSelection)
         self._table.setHorizontalHeaderLabels(
             ["PDF File", "Pages (e.g. 1-3,5)", ""]
         )
@@ -94,33 +110,91 @@ class Plugin(PluginBase):
 
         for file in files:
             reader = PdfReader(file)
-            row = self._table.rowCount()
-            self._table.insertRow(row)
+            self._add_row(file, f"1-{len(reader.pages)} or leave empty = all")
 
-            item = QTableWidgetItem(file)
-            item.setFlags(Qt.ItemIsEnabled)
-            self._table.setItem(row, 0, item)
+    def _add_row(self, filepath: str, placeholder: str, pages_text: str = ""):
+        """Insert a new row at the bottom with file path, page input, remove button."""
+        row = self._table.rowCount()
+        self._table.insertRow(row)
 
-            page_input = QLineEdit()
-            page_input.setPlaceholderText(
-                f"1-{len(reader.pages)} or leave empty = all"
-            )
-            self._table.setCellWidget(row, 1, page_input)
+        item = QTableWidgetItem(filepath)
+        item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
+        self._table.setItem(row, 0, item)
 
-            btn_remove = QPushButton("Remove")
-            btn_remove.setCursor(Qt.PointingHandCursor)
-            btn_remove.clicked.connect(
-                lambda _, r=row: self._remove_row(r)
-            )
-            self._table.setCellWidget(row, 2, btn_remove)
+        page_input = QLineEdit()
+        page_input.setPlaceholderText(placeholder)
+        if pages_text:
+            page_input.setText(pages_text)
+        self._table.setCellWidget(row, 1, page_input)
 
-    def _remove_row(self, row: int):
-        if self._table and row < self._table.rowCount():
-            self._table.removeRow(row)
+        btn_remove = QPushButton("Remove")
+        btn_remove.setCursor(Qt.PointingHandCursor)
+        btn_remove.clicked.connect(lambda: self._remove_current(btn_remove))
+        self._table.setCellWidget(row, 2, btn_remove)
+
+    def _remove_current(self, btn: QPushButton):
+        """Find the row containing this button and remove it."""
+        if not self._table:
+            return
+        for r in range(self._table.rowCount()):
+            if self._table.cellWidget(r, 2) is btn:
+                self._table.removeRow(r)
+                return
 
     def _clear_list(self):
         if self._table:
             self._table.setRowCount(0)
+
+    def _swap_rows(self, row_a: int, row_b: int):
+        """Swap two rows in the table, preserving cell widget data."""
+        if not self._table:
+            return
+
+        # Read data from both rows
+        path_a = self._table.item(row_a, 0).text()
+        path_b = self._table.item(row_b, 0).text()
+
+        widget_a = self._table.cellWidget(row_a, 1)
+        widget_b = self._table.cellWidget(row_b, 1)
+        text_a = widget_a.text() if widget_a else ""
+        text_b = widget_b.text() if widget_b else ""
+        placeholder_a = widget_a.placeholderText() if widget_a else ""
+        placeholder_b = widget_b.placeholderText() if widget_b else ""
+
+        # Swap file path items
+        self._table.item(row_a, 0).setText(path_b)
+        self._table.item(row_b, 0).setText(path_a)
+
+        # Recreate page input widgets with swapped data
+        new_input_a = QLineEdit()
+        new_input_a.setPlaceholderText(placeholder_b)
+        if text_b:
+            new_input_a.setText(text_b)
+        self._table.setCellWidget(row_a, 1, new_input_a)
+
+        new_input_b = QLineEdit()
+        new_input_b.setPlaceholderText(placeholder_a)
+        if text_a:
+            new_input_b.setText(text_a)
+        self._table.setCellWidget(row_b, 1, new_input_b)
+
+    def _move_up(self):
+        if not self._table:
+            return
+        row = self._table.currentRow()
+        if row <= 0:
+            return
+        self._swap_rows(row, row - 1)
+        self._table.selectRow(row - 1)
+
+    def _move_down(self):
+        if not self._table:
+            return
+        row = self._table.currentRow()
+        if row < 0 or row >= self._table.rowCount() - 1:
+            return
+        self._swap_rows(row, row + 1)
+        self._table.selectRow(row + 1)
 
     @staticmethod
     def _parse_pages(text: str, max_pages: int) -> list[int]:
@@ -189,8 +263,6 @@ class Plugin(PluginBase):
 
     def start(self) -> None:
         super().start()
-        # No background work — merging is user-triggered in the host process.
-        # Keep the worker alive so the plugin stays in "running" state.
         import time
         while self.is_running:
             time.sleep(1)

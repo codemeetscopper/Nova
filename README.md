@@ -59,6 +59,8 @@ Nova/
 └── plugins/                # Plugin directory
     ├── clock_widget/       # Clock widget plugin
     ├── system_monitor/     # System monitor plugin
+    ├── pdf_merger/         # PDF merger with page selection
+    ├── secure_share/       # Encrypted LAN file sharing
     └── dummy/              # Demo plugin
 ```
 
