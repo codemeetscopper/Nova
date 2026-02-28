@@ -13,7 +13,7 @@ from pathlib import Path
 
 from PySide6.QtWidgets import QApplication
 
-from installer.core.config import InstallerConfig
+from installer.core.config import InstallerConfig, discover_plugins
 from installer.core.engine import (
     InstallConfig, InstallationEngine,
     detect_existing_install, load_install_info,
@@ -123,6 +123,7 @@ def _build_install_config(manifest, source_dir, install_path,
         ic.start_menu = opts["start_menu"]
         ic.auto_start = opts["auto_start"]
         ic.components = opts["components"]
+        ic.selected_plugins = opts.get("selected_plugins")
 
     ic.run_after_install = manifest.run_after_install
     return ic
@@ -133,6 +134,9 @@ def _build_install_config(manifest, source_dir, install_path,
 def _run_install_mode(app, window, engine, manifest, cfg,
                       source_dir, license_file, reg_key):
     """Standard installation flow."""
+
+    # Discover plugins from source directory
+    discovered_plugins = discover_plugins(source_dir)
 
     welcome = WelcomePage(
         app_name=manifest.name,
@@ -145,7 +149,10 @@ def _run_install_mode(app, window, engine, manifest, cfg,
         app_name=manifest.name,
         default_dir=manifest.default_install_dir,
     )
-    options_pg = OptionsPage(components=manifest.components)
+    options_pg = OptionsPage(
+        components=manifest.components,
+        plugins=discovered_plugins,
+    )
     progress_pg = ProgressPage()
     finish_pg = FinishPage(app_name=manifest.name)
 
@@ -194,6 +201,7 @@ def _run_install_mode(app, window, engine, manifest, cfg,
         ic.start_menu = True
         ic.auto_start = False
         ic.components = [c["name"] for c in manifest.components]
+        ic.selected_plugins = [p["id"] for p in discovered_plugins]
         window.navigate(5)  # jump to progress page
 
     welcome.install_now.connect(_on_install_now)
@@ -268,11 +276,16 @@ def _run_maintenance_mode(app, window, engine, manifest, cfg,
                           source_dir, existing_path, reg_key):
     """Maintenance flow: Modify, Repair, Update, or Uninstall."""
 
+    discovered_plugins = discover_plugins(source_dir)
+
     maintenance_pg = MaintenancePage(
         app_name=manifest.name,
         install_path=existing_path,
     )
-    options_pg = OptionsPage(components=manifest.components)
+    options_pg = OptionsPage(
+        components=manifest.components,
+        plugins=discovered_plugins,
+    )
     progress_pg = ProgressPage()
     finish_pg = FinishPage(app_name=manifest.name)
 

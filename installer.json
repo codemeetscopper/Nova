@@ -73,12 +73,6 @@
             "description": "The Nova application framework and built-in pages.",
             "icon": "logo",
             "default": true
-        },
-        {
-            "name": "Built-in Plugins",
-            "description": "Clock widget, system monitor, and demo plugins.",
-            "icon": "extension",
-            "default": true
         }
     ]
 }

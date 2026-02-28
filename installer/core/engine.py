@@ -150,6 +150,15 @@ class InstallWorker(QObject):
 
         self._log(f"  Installed {copied} files to {install_dir}")
 
+        # Remove unselected plugins from the pre-built bundle
+        if cfg.selected_plugins is not None:
+            plugins_dir = install_dir / "plugins"
+            if plugins_dir.exists():
+                for pdir in plugins_dir.iterdir():
+                    if pdir.is_dir() and pdir.name not in cfg.selected_plugins:
+                        shutil.rmtree(pdir, ignore_errors=True)
+                        self._log(f"  Skipped plugin: {pdir.name}")
+
         if self._cancelled:
             return
 
@@ -262,11 +271,12 @@ class InstallWorker(QObject):
         if self._cancelled:
             return
 
-        # Step 4: Copy resource directories
+        # Step 4: Copy resource directories (with selective plugin support)
         step += 1
         self._update(step, total_steps, "Copying resources...")
         source = Path(cfg.source_dir)
-        self._copy_resource_dirs(cfg.resource_dirs, source, install_dir)
+        self._copy_resource_dirs(cfg.resource_dirs, source, install_dir,
+                                 selected_plugins=cfg.selected_plugins)
 
         if self._cancelled:
             return
@@ -392,28 +402,50 @@ class InstallWorker(QObject):
     # ── Resource directory copying ─────────────────────────────
 
     def _copy_resource_dirs(self, resource_dirs: List[str],
-                             source: Path, install_dir: Path):
-        """Copy resource directories from source to install dir."""
+                             source: Path, install_dir: Path,
+                             selected_plugins: List[str] | None = None):
+        """Copy resource directories from source to install dir.
+
+        When *selected_plugins* is set and the directory being copied is
+        ``plugins``, only the listed plugin sub-directories are copied.
+        """
         if not resource_dirs:
             self._log("  No resource directories to copy")
             return
 
+        ignore = shutil.ignore_patterns("__pycache__", "*.pyc", ".git")
+
         for dir_name in resource_dirs:
             src = source / dir_name
             dst = install_dir / dir_name
-            if src.exists() and src.is_dir():
+            if not src.exists() or not src.is_dir():
+                self._log(f"  Resource directory not found: {src}")
+                continue
+
+            # Selective plugin copy
+            if dir_name == "plugins" and selected_plugins is not None:
+                dst.mkdir(parents=True, exist_ok=True)
+                copied_count = 0
+                for plugin_dir in sorted(src.iterdir()):
+                    if not plugin_dir.is_dir():
+                        continue
+                    if plugin_dir.name not in selected_plugins:
+                        self._log(f"  Skipped plugin: {plugin_dir.name}")
+                        continue
+                    plugin_dst = dst / plugin_dir.name
+                    if plugin_dst.exists():
+                        shutil.rmtree(plugin_dst, ignore_errors=True)
+                    shutil.copytree(plugin_dir, plugin_dst, ignore=ignore)
+                    count = sum(1 for _ in plugin_dst.rglob("*") if _.is_file())
+                    self._log(f"  Copied plugin: {plugin_dir.name} ({count} files)")
+                    copied_count += 1
+                self._log(f"  Installed {copied_count} of {len(selected_plugins)} selected plugins")
+            else:
                 if dst.exists():
                     shutil.rmtree(dst, ignore_errors=True)
-                shutil.copytree(
-                    src, dst,
-                    ignore=shutil.ignore_patterns(
-                        "__pycache__", "*.pyc", ".git"
-                    ),
-                )
+                shutil.copytree(src, dst, ignore=ignore)
                 count = sum(1 for _ in dst.rglob("*") if _.is_file())
                 self._log(f"  Copied resource directory: {dir_name} ({count} files)")
-            else:
-                self._log(f"  Resource directory not found: {src}")
 
     # ── File-copy-based installation (fallback) ────────────────
 
@@ -595,6 +627,7 @@ class InstallWorker(QObject):
             "auto_start": cfg.auto_start,
             "entry_script": cfg.entry_script,
             "source_dir": cfg.source_dir,
+            "selected_plugins": cfg.selected_plugins,
             "installed_at": time.strftime("%Y-%m-%d %H:%M:%S"),
         }
         info_file = install_dir / ".install_info.json"
@@ -924,6 +957,7 @@ class InstallConfig:
         self.start_menu: bool = True
         self.auto_start: bool = False
         self.components: List[bool] = []
+        self.selected_plugins: List[str] | None = None  # None = all, list = selective
         self.run_after_install: str = ""
 
         # PyInstaller settings

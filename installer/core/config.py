@@ -59,6 +59,31 @@ class AppManifest:
     run_after_install: str = ""    # Script to run after install
 
 
+def discover_plugins(source_dir: Path) -> List[Dict[str, Any]]:
+    """Scan the plugins directory for plugin.json manifests.
+
+    Returns a list of dicts with keys: id, name, description, icon, default.
+    """
+    plugins_dir = source_dir / "plugins"
+    if not plugins_dir.exists():
+        return []
+
+    result: List[Dict[str, Any]] = []
+    for pj in sorted(plugins_dir.glob("*/plugin.json")):
+        try:
+            data = json.loads(pj.read_text(encoding="utf-8"))
+            result.append({
+                "id": data.get("id", pj.parent.name),
+                "name": data.get("name", pj.parent.name),
+                "description": data.get("description", ""),
+                "icon": "extension",
+                "default": True,
+            })
+        except Exception:
+            _log.warning("Failed to read plugin manifest: %s", pj)
+    return result
+
+
 @dataclass
 class InstallerConfig:
     """Full installer configuration loaded from installer.json."""

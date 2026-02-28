@@ -161,6 +161,7 @@ class DetachedPluginWindow(QWidget):
         self._is_active = active
         self._toolbar.set_status(active)
         self._toolbar.action_bar.set_active(active)
+        self._plugin_widget.setEnabled(active)
 
     def refresh_theme(self):
         self._toolbar.refresh_icons()

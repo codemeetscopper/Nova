@@ -185,6 +185,10 @@ class MainWindow(QMainWindow):
             return
         self._pages[page_id] = (title, widget)
         self._plugin_icons[page_id] = icon
+        # Disable widget until plugin is started (online)
+        pid = page_id[len("plugin_"):] if page_id.startswith("plugin_") else ""
+        active = self._pm.is_active(pid) if self._pm and pid else False
+        widget.setEnabled(active)
         self._stack.addWidget(widget)
         if in_sidebar:
             self._sidebar.add_plugin_item(page_id, title, icon)
@@ -252,6 +256,12 @@ class MainWindow(QMainWindow):
 
     def update_plugin_status(self, plugin_id: str, active: bool):
         page_id = f"plugin_{plugin_id}"
+
+        # Enable/disable plugin widget based on running state
+        entry = self._pages.get(page_id)
+        if entry:
+            _, widget = entry
+            widget.setEnabled(active)
 
         if page_id in self._detached:
             dw = self._detached[page_id]

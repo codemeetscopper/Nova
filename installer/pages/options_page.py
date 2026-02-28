@@ -74,6 +74,7 @@ class _OptionCard(QFrame):
 
 class OptionsPage(QWidget):
     def __init__(self, components: List[Dict[str, Any]] | None = None,
+                 plugins: List[Dict[str, Any]] | None = None,
                  parent: QWidget | None = None):
         super().__init__(parent)
         self.setObjectName("OptionsPage")
@@ -181,15 +182,54 @@ class OptionsPage(QWidget):
 
             root.addWidget(comp_card)
 
+        # ── Plugins section (discovered from plugins/) ────────
+        self._plugin_ids: List[str] = []
+        self._plugin_opts: List[_OptionCard] = []
+        if plugins:
+            plug_title = QLabel("PLUGINS")
+            plug_title.setObjectName("SectionLabel")
+            root.addWidget(plug_title)
+
+            plug_card = QFrame()
+            plug_card.setObjectName("OptionsGroupCard")
+            plug_card.setFrameShape(QFrame.NoFrame)
+            pc_layout = QVBoxLayout(plug_card)
+            pc_layout.setContentsMargins(0, 0, 0, 0)
+            pc_layout.setSpacing(0)
+
+            for i, plug in enumerate(plugins):
+                if i > 0:
+                    sep = QFrame()
+                    sep.setObjectName("OptionSep")
+                    sep.setFrameShape(QFrame.HLine)
+                    pc_layout.addWidget(sep)
+
+                opt = _OptionCard(
+                    plug.get("icon", "extension"),
+                    plug.get("name", "Plugin"),
+                    plug.get("description", ""),
+                    checked=plug.get("default", True),
+                )
+                pc_layout.addWidget(opt)
+                self._plugin_ids.append(plug.get("id", ""))
+                self._plugin_opts.append(opt)
+
+            root.addWidget(plug_card)
+
         root.addStretch()
 
         scroll.setWidget(content)
         outer.addWidget(scroll)
 
     def get_options(self) -> Dict[str, Any]:
+        selected_plugins = [
+            pid for pid, opt in zip(self._plugin_ids, self._plugin_opts)
+            if opt.checked
+        ]
         return {
             "desktop_shortcut": self._desktop_opt.checked,
             "start_menu": self._startmenu_opt.checked,
             "auto_start": self._autostart_opt.checked,
             "components": [opt.checked for opt in self._component_opts],
+            "selected_plugins": selected_plugins,
         }
