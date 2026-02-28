@@ -61,10 +61,13 @@ def _wire_pm_signals(pm, home, window, plugins_pg, settings) -> None:
     pm.plugin_imported.connect(_update_home)
     _update_home()
 
-    # Update page header status indicator when plugin state changes
+    # Update header status + action bar when plugin state changes
     pm.plugin_started.connect(lambda pid: window.update_plugin_status(pid, True))
     pm.plugin_stopped.connect(lambda pid: window.update_plugin_status(pid, False))
     pm.plugin_crashed.connect(lambda pid, _msg: window.update_plugin_status(pid, False))
+
+    # Sync favorite icon in header/detached action bars
+    pm.plugin_favorite_changed.connect(lambda pid, fav: window.update_plugin_favorite(pid, fav))
 
     def _on_navigate(pid: str):
         page_id = f"plugin_{pid}"
@@ -213,7 +216,7 @@ def run(ctx) -> None:
     # ── Style change: sidebar + plugin cards + plugin instances + detached ──
     def _on_style_changed():
         window._sidebar.refresh_colors()
-        window._header.refresh_undock_icon()
+        window._header.refresh_icons()
         window.refresh_detached_themes()
         plugins_pg.refresh_icons()
         _cascade_theme_to_plugins(pm, ctx)

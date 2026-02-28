@@ -448,8 +448,8 @@ QMainWindow, #NovaMainWindow { background-color: <bg>; }
 #UndockButton {
     background: transparent;
     border: none;
-    border-radius: 5px;
-    padding: 2px;
+    border-radius: 6px;
+    padding: 4px;
     min-width: 0; min-height: 0;
 }
 #UndockButton:hover { background: <accent_ln>; }
@@ -477,16 +477,30 @@ QMainWindow, #NovaMainWindow { background-color: <bg>; }
     border: none;
 }
 #DetachedDockButton {
-    background: <accent_ln>;
-    color: <accent>;
+    background: transparent;
     border: none;
-    border-radius: 5px;
-    padding: 4px 10px;
-    font-size: 12px;
-    font-weight: 500;
+    border-radius: 6px;
+    padding: 4px;
     min-width: 0; min-height: 0;
 }
-#DetachedDockButton:hover { background: <accent_l3>; }
+#DetachedDockButton:hover { background: <accent_ln>; }
+
+/* ─── Plugin action bar ──────────────────────────────────── */
+#PluginActionBar { background: transparent; }
+#ActionBarStart, #ActionBarStop, #ActionBarIcon, #ActionBarFav {
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    padding: 4px;
+    min-width: 0; min-height: 0;
+}
+#ActionBarStart:hover, #ActionBarStop:hover,
+#ActionBarIcon:hover, #ActionBarFav:hover {
+    background: <accent_ln>;
+}
+#ActionBarStart:disabled, #ActionBarStop:disabled {
+    background: transparent;
+}
 
 /* Sidebar detached indicator */
 #SidebarDetachedIndicator {

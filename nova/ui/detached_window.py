@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from typing import Optional
 
 from PySide6.QtCore import QSize, Qt, Signal
 from PySide6.QtWidgets import (
@@ -11,6 +10,7 @@ from PySide6.QtWidgets import (
 
 from nova.core.icons import IconManager
 from nova.core.style import StyleManager
+from nova.ui.plugin_action_bar import PluginActionBar
 
 _log = logging.getLogger(__name__)
 
@@ -19,17 +19,17 @@ _COLOR_OFFLINE = "#888888"
 
 
 class _DockToolbar(QWidget):
-    """Slim toolbar inside the detached window with status + dock-back button."""
+    """Slim toolbar: status | action buttons | dock-back icon."""
 
     dock_clicked = Signal()
 
     def __init__(self, title: str, parent: QWidget | None = None):
         super().__init__(parent)
         self.setObjectName("DetachedToolbar")
-        self.setFixedHeight(34)
+        self.setFixedHeight(44)
 
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(12, 0, 8, 0)
+        layout.setContentsMargins(16, 0, 16, 0)
         layout.setSpacing(8)
 
         # Status dot
@@ -47,14 +47,23 @@ class _DockToolbar(QWidget):
 
         layout.addStretch()
 
-        # Dock-back button
-        self._dock_btn = QPushButton("Dock Back")
+        # Plugin action bar
+        self._action_bar = PluginActionBar()
+        layout.addWidget(self._action_bar, 0, Qt.AlignVCenter)
+
+        # Dock-back icon button
+        self._dock_btn = QPushButton()
         self._dock_btn.setObjectName("DetachedDockButton")
+        self._dock_btn.setFixedSize(30, 30)
         self._dock_btn.setCursor(Qt.PointingHandCursor)
         self._dock_btn.setToolTip("Dock back to main window")
         self._dock_btn.clicked.connect(self.dock_clicked)
         self._refresh_dock_icon()
         layout.addWidget(self._dock_btn, 0, Qt.AlignVCenter)
+
+    @property
+    def action_bar(self) -> PluginActionBar:
+        return self._action_bar
 
     def set_status(self, active: bool):
         if active:
@@ -66,13 +75,15 @@ class _DockToolbar(QWidget):
 
     def refresh_icons(self):
         self._refresh_dock_icon()
+        self._action_bar.refresh_icons()
 
     def _refresh_dock_icon(self):
         accent = StyleManager.get_colour("accent")
-        px = IconManager.get_pixmap("dock_window", accent, 14)
+        px = IconManager.get_pixmap("dock_window", accent, 16)
         if px and not px.isNull():
             self._dock_btn.setIcon(px)
-            self._dock_btn.setIconSize(QSize(14, 14))
+            self._dock_btn.setIconSize(QSize(16, 16))
+            self._dock_btn.setText("")
 
     def _set_status_style(self, color: str):
         self._status_dot.setStyleSheet(
@@ -90,15 +101,13 @@ class DetachedPluginWindow(QWidget):
     """
     A standalone window that hosts an undocked plugin widget.
     Uses the native OS window frame for reliable drag/resize/minimize/maximize/close.
-    Contains a slim toolbar with status indicator and dock-back button.
+    Contains a toolbar with status, plugin action buttons, and dock-back icon.
     """
 
     dock_requested = Signal(str)   # page_id
-    closed = Signal(str)           # page_id
 
     def __init__(self, page_id: str, title: str, icon_str: str,
                  widget: QWidget, parent: QWidget | None = None):
-        # Standard OS window — native title bar, drag, resize, controls
         super().__init__(parent, Qt.Window)
         self._page_id = page_id
         self._plugin_widget = widget
@@ -121,19 +130,18 @@ class DetachedPluginWindow(QWidget):
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)
 
-        # Toolbar with status + dock button
+        # Toolbar
         self._toolbar = _DockToolbar(title)
         self._toolbar.dock_clicked.connect(self._on_dock)
         root.addWidget(self._toolbar)
 
-        # Separator line
+        # Separator
         sep = QLabel()
         sep.setFixedHeight(1)
         sep.setObjectName("DetachedHeaderSep")
         root.addWidget(sep)
 
-        # Plugin widget content — must call show() because QStackedWidget
-        # hides non-current widgets, and that state persists after removal.
+        # Plugin widget — show() needed because QStackedWidget hides non-current
         root.addWidget(widget, 1)
         widget.show()
 
@@ -145,9 +153,14 @@ class DetachedPluginWindow(QWidget):
     def plugin_widget(self) -> QWidget:
         return self._plugin_widget
 
+    @property
+    def action_bar(self) -> PluginActionBar:
+        return self._toolbar.action_bar
+
     def set_plugin_status(self, active: bool):
         self._is_active = active
         self._toolbar.set_status(active)
+        self._toolbar.action_bar.set_active(active)
 
     def refresh_theme(self):
         self._toolbar.refresh_icons()
@@ -158,12 +171,9 @@ class DetachedPluginWindow(QWidget):
         self._plugin_widget.setParent(None)
         return self._plugin_widget
 
-    # ── Internal ──────────────────────────────────────────────
-
     def _on_dock(self):
         self.dock_requested.emit(self._page_id)
 
     def closeEvent(self, event):
-        # Close button docks the plugin back instead of destroying it
         self.dock_requested.emit(self._page_id)
         event.ignore()

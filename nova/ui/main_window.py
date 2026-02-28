@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
 from nova.core.icons import IconManager
 from nova.core.style import StyleManager
 from nova.ui.detached_window import DetachedPluginWindow
+from nova.ui.plugin_action_bar import PluginActionBar
 from nova.ui.sidebar import Sidebar
 
 _log = logging.getLogger(__name__)
@@ -30,7 +31,7 @@ class PageHeader(QWidget):
         self.setFixedHeight(44)
 
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(20, 0, 20, 0)
+        layout.setContentsMargins(16, 0, 16, 0)
         layout.setSpacing(8)
 
         self._title = QLabel()
@@ -40,6 +41,7 @@ class PageHeader(QWidget):
 
         layout.addStretch()
 
+        # Status dot + label
         self._status_dot = QLabel()
         self._status_dot.setFixedSize(8, 8)
         self._status_dot.setObjectName("HeaderStatusDot")
@@ -51,16 +53,25 @@ class PageHeader(QWidget):
         self._status_label.hide()
         layout.addWidget(self._status_label, 0, Qt.AlignVCenter)
 
+        # Plugin action bar — only visible for plugin pages
+        self._action_bar = PluginActionBar()
+        self._action_bar.hide()
+        layout.addWidget(self._action_bar, 0, Qt.AlignVCenter)
+
         # Undock button — only visible for plugin pages
         self._undock_btn = QPushButton()
         self._undock_btn.setObjectName("UndockButton")
-        self._undock_btn.setFixedSize(28, 28)
+        self._undock_btn.setFixedSize(30, 30)
         self._undock_btn.setCursor(Qt.PointingHandCursor)
         self._undock_btn.setToolTip("Undock to separate window")
         self._undock_btn.hide()
         self._undock_btn.clicked.connect(self.undock_clicked)
         self._refresh_undock_icon()
         layout.addWidget(self._undock_btn, 0, Qt.AlignVCenter)
+
+    @property
+    def action_bar(self) -> PluginActionBar:
+        return self._action_bar
 
     def set_title(self, title: str):
         self._title.setText(title)
@@ -80,11 +91,13 @@ class PageHeader(QWidget):
         self._status_dot.show()
         self._status_label.show()
 
-    def set_undock_visible(self, visible: bool):
+    def set_plugin_controls_visible(self, visible: bool):
         self._undock_btn.setVisible(visible)
+        self._action_bar.setVisible(visible)
 
-    def refresh_undock_icon(self):
+    def refresh_icons(self):
         self._refresh_undock_icon()
+        self._action_bar.refresh_icons()
 
     def _refresh_undock_icon(self):
         fg1 = StyleManager.get_colour("fg1")
@@ -141,6 +154,15 @@ class MainWindow(QMainWindow):
 
         self._header = PageHeader()
         self._header.undock_clicked.connect(self._on_undock_current)
+
+        # Connect header action bar signals
+        ab = self._header.action_bar
+        ab.start_clicked.connect(self._on_action_start)
+        ab.stop_clicked.connect(self._on_action_stop)
+        ab.reload_clicked.connect(self._on_action_reload)
+        ab.favorite_toggled.connect(self._on_action_favorite)
+        ab.info_clicked.connect(self._on_action_info)
+
         self._stack = QStackedWidget()
         self._stack.setObjectName("PageStack")
 
@@ -168,7 +190,6 @@ class MainWindow(QMainWindow):
             self._sidebar.add_plugin_item(page_id, title, icon)
 
     def remove_plugin_page(self, page_id: str):
-        # If the plugin is detached, close the detached window first
         if page_id in self._detached:
             dw = self._detached.pop(page_id)
             dw.take_widget()
@@ -199,7 +220,6 @@ class MainWindow(QMainWindow):
     # ── Navigation ────────────────────────────────────────────
 
     def navigate(self, page_id: str):
-        # If the plugin is detached, raise its window instead
         if page_id in self._detached:
             dw = self._detached[page_id]
             dw.showNormal()
@@ -216,31 +236,41 @@ class MainWindow(QMainWindow):
         self._sidebar.set_active(page_id)
         self._current = page_id
 
-        # Show status + undock button for plugin pages
         if page_id.startswith("plugin_") and self._pm:
             pid = page_id[len("plugin_"):]
-            if self._pm.is_active(pid):
+            active = self._pm.is_active(pid)
+            if active:
                 self._header.set_status("Online", _COLOR_RUNNING)
             else:
                 self._header.set_status("Offline", _COLOR_OFFLINE)
-            self._header.set_undock_visible(True)
+            self._header.set_plugin_controls_visible(True)
+            self._header.action_bar.set_active(active)
+            self._header.action_bar.set_favorite(self._pm.is_favorite(pid))
         else:
             self._header.set_status(None)
-            self._header.set_undock_visible(False)
+            self._header.set_plugin_controls_visible(False)
 
     def update_plugin_status(self, plugin_id: str, active: bool):
         page_id = f"plugin_{plugin_id}"
 
-        # Update detached window status if applicable
         if page_id in self._detached:
-            self._detached[page_id].set_plugin_status(active)
+            dw = self._detached[page_id]
+            dw.set_plugin_status(active)
 
-        # Update header if currently viewing this plugin
         if self._current == page_id:
             if active:
                 self._header.set_status("Online", _COLOR_RUNNING)
             else:
                 self._header.set_status("Offline", _COLOR_OFFLINE)
+            self._header.action_bar.set_active(active)
+
+    def update_plugin_favorite(self, plugin_id: str, is_fav: bool):
+        """Sync favorite icon in header and detached window action bars."""
+        page_id = f"plugin_{plugin_id}"
+        if self._current == page_id:
+            self._header.action_bar.set_favorite(is_fav)
+        if page_id in self._detached:
+            self._detached[page_id].action_bar.set_favorite(is_fav)
 
     # ── Undock / Dock ─────────────────────────────────────────
 
@@ -254,18 +284,26 @@ class MainWindow(QMainWindow):
         title, widget = entry
         icon_str = self._plugin_icons.get(page_id, "extension")
 
-        # Remove widget from stack (don't delete it)
         self._stack.removeWidget(widget)
         del self._pages[page_id]
 
-        # Create detached window
         dw = DetachedPluginWindow(page_id, title, icon_str, widget, None)
         dw.dock_requested.connect(self.dock_plugin)
 
-        # Set initial status
+        # Wire detached window action bar signals
+        dab = dw.action_bar
+        dab.start_clicked.connect(lambda pid=page_id: self._on_detached_action_start(pid))
+        dab.stop_clicked.connect(lambda pid=page_id: self._on_detached_action_stop(pid))
+        dab.reload_clicked.connect(lambda pid=page_id: self._on_detached_action_reload(pid))
+        dab.favorite_toggled.connect(lambda v, pid=page_id: self._on_detached_action_favorite(pid, v))
+        dab.info_clicked.connect(lambda pid=page_id: self._on_detached_action_info(pid))
+
+        # Set initial state
         pid = page_id[len("plugin_"):]
-        if self._pm and self._pm.is_active(pid):
-            dw.set_plugin_status(True)
+        active = self._pm.is_active(pid) if self._pm else False
+        dw.set_plugin_status(active)
+        dab.set_active(active)
+        dab.set_favorite(self._pm.is_favorite(pid) if self._pm else False)
 
         self._detached[page_id] = dw
 
@@ -282,13 +320,10 @@ class MainWindow(QMainWindow):
         dw.move(target_x, target_y)
         dw.show()
 
-        # Navigate away from the undocked page
         if self._current == page_id:
             self.navigate("home")
 
-        # Update sidebar to show detached indicator
         self._sidebar.set_detached(page_id, True)
-
         self.plugin_undocked.emit(page_id)
         _log.debug("Undocked plugin: %s", page_id)
 
@@ -297,22 +332,16 @@ class MainWindow(QMainWindow):
         if dw is None:
             return
 
-        # Take the widget back
         widget = dw.take_widget()
         title = dw.windowTitle().replace(" — Nova", "")
 
-        # Re-add to pages and stack
         self._pages[page_id] = (title, widget)
         self._stack.addWidget(widget)
 
-        # Close the detached window
         dw.close()
         dw.deleteLater()
 
-        # Update sidebar
         self._sidebar.set_detached(page_id, False)
-
-        # Navigate to the docked plugin
         self.navigate(page_id)
 
         self.plugin_docked.emit(page_id)
@@ -336,7 +365,7 @@ class MainWindow(QMainWindow):
     def is_detached(self, page_id: str) -> bool:
         return page_id in self._detached
 
-    # ── Internal ──────────────────────────────────────────────
+    # ── Internal: sidebar ─────────────────────────────────────
 
     def _on_sidebar_click(self, page_id: str):
         self.navigate(page_id)
@@ -345,7 +374,79 @@ class MainWindow(QMainWindow):
         if self._current and self._current.startswith("plugin_"):
             self.undock_plugin(self._current)
 
+    # ── Internal: header action bar handlers ──────────────────
+
+    def _current_pid(self) -> Optional[str]:
+        if self._current and self._current.startswith("plugin_"):
+            return self._current[len("plugin_"):]
+        return None
+
+    def _on_action_start(self):
+        pid = self._current_pid()
+        if pid and self._pm:
+            if not self._pm.is_loaded(pid):
+                self._pm.load(pid)
+            self._pm.start(pid)
+
+    def _on_action_stop(self):
+        pid = self._current_pid()
+        if pid and self._pm:
+            self._pm.stop(pid)
+
+    def _on_action_reload(self):
+        pid = self._current_pid()
+        if pid and self._pm:
+            self._pm.reload_plugin(pid)
+
+    def _on_action_favorite(self, new_state: bool):
+        pid = self._current_pid()
+        if pid and self._pm:
+            self._pm.set_favorite(pid, new_state)
+
+    def _on_action_info(self):
+        pid = self._current_pid()
+        if pid and self._pm:
+            self._show_info_dialog(pid)
+
+    # ── Internal: detached action bar handlers ────────────────
+
+    def _on_detached_action_start(self, page_id: str):
+        pid = page_id[len("plugin_"):]
+        if self._pm:
+            if not self._pm.is_loaded(pid):
+                self._pm.load(pid)
+            self._pm.start(pid)
+
+    def _on_detached_action_stop(self, page_id: str):
+        pid = page_id[len("plugin_"):]
+        if self._pm:
+            self._pm.stop(pid)
+
+    def _on_detached_action_reload(self, page_id: str):
+        pid = page_id[len("plugin_"):]
+        if self._pm:
+            self._pm.reload_plugin(pid)
+
+    def _on_detached_action_favorite(self, page_id: str, new_state: bool):
+        pid = page_id[len("plugin_"):]
+        if self._pm:
+            self._pm.set_favorite(pid, new_state)
+
+    def _on_detached_action_info(self, page_id: str):
+        pid = page_id[len("plugin_"):]
+        if self._pm:
+            self._show_info_dialog(pid)
+
+    def _show_info_dialog(self, pid: str):
+        from nova.pages.plugins_page import _InfoDialog
+        record = self._pm._records.get(pid)
+        if record is None:
+            return
+        dlg = _InfoDialog(record.manifest, self._pm.get_state(pid), self)
+        dlg.exec()
+
+    # ── Close ─────────────────────────────────────────────────
+
     def closeEvent(self, event):
-        # Dock all detached windows back before closing
         self.dock_all()
         super().closeEvent(event)
