@@ -2,6 +2,16 @@ import logging
 import sys
 from pathlib import Path
 
+# ── Windows: set AppUserModelID so the taskbar shows our icon ─────
+if sys.platform == "win32":
+    try:
+        import ctypes
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
+            "nova.app.1.0"
+        )
+    except Exception:
+        pass
+
 # ── Worker mode (PyInstaller frozen) ──────────────────────────────
 # When launched as: Nova.exe --worker <plugin_id> <plugins_dir> <socket_name>
 # we skip the GUI and run the plugin worker host directly.

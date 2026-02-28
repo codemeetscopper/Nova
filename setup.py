@@ -34,6 +34,89 @@ MAIN_SCRIPT = ROOT / "installer_main.py"
 DIST_DIR = ROOT / "dist"
 BUILD_DIR = ROOT / "build"
 PREBUILD_DIR = ROOT / "build" / "_nova_prebuild"
+ICON_FILE = ROOT / "build" / "nova.ico"
+
+
+def _generate_ico(output_path: Path) -> Path:
+    """Generate a .ico file from the nova_icon SVG template.
+
+    Uses PySide6 to render the SVG at multiple sizes, then writes a raw
+    ICO file (PNG-encoded entries).  No Pillow dependency required.
+    """
+    import struct
+
+    # Import PySide6 — a QGuiApplication is needed for rendering
+    from PySide6.QtCore import QByteArray, QBuffer, QIODevice, Qt
+    from PySide6.QtGui import QGuiApplication, QImage, QPainter
+    from PySide6.QtSvg import QSvgRenderer
+
+    # Ensure a QGuiApplication exists
+    app = QGuiApplication.instance()
+    created_app = False
+    if app is None:
+        app = QGuiApplication([])
+        created_app = True
+
+    try:
+        from installer.resources.builtin_icons import ICONS
+
+        svg_template = ICONS.get("nova_icon", "")
+        svg_str = svg_template.format(primary="#0088CC", secondary="#00BBFF")
+        svg_data = QByteArray(svg_str.encode())
+
+        sizes = [16, 24, 32, 48, 64, 128, 256]
+        png_blobs: list[tuple[int, bytes]] = []
+
+        for sz in sizes:
+            renderer = QSvgRenderer(svg_data)
+            if not renderer.isValid():
+                continue
+            img = QImage(sz, sz, QImage.Format_ARGB32)
+            img.fill(Qt.transparent)
+            painter = QPainter(img)
+            renderer.render(painter)
+            painter.end()
+
+            buf = QBuffer()
+            buf.open(QIODevice.WriteOnly)
+            img.save(buf, "PNG")
+            png_blobs.append((sz, bytes(buf.data())))
+            buf.close()
+
+        if not png_blobs:
+            print("  WARNING: Could not render icon SVG")
+            return output_path
+
+        # Write ICO file: ICONDIR + ICONDIRENTRY[] + PNG data
+        count = len(png_blobs)
+        header = struct.pack("<HHH", 0, 1, count)  # reserved, type=ICO, count
+
+        dir_entries = b""
+        data_offset = 6 + count * 16  # header + entries
+        image_data = b""
+
+        for sz, blob in png_blobs:
+            w = 0 if sz >= 256 else sz  # 0 means 256 in ICO spec
+            h = w
+            entry = struct.pack(
+                "<BBBBHHII",
+                w, h,           # width, height
+                0, 0,           # colorCount, reserved
+                1, 32,          # planes, bitCount
+                len(blob),      # bytesInRes
+                data_offset,    # imageOffset
+            )
+            dir_entries += entry
+            data_offset += len(blob)
+            image_data += blob
+
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_bytes(header + dir_entries + image_data)
+        print(f"  Generated icon: {output_path} ({count} sizes)")
+        return output_path
+    finally:
+        if created_app:
+            del app
 
 
 def _load_manifest():
@@ -85,14 +168,17 @@ def _build_nova_app(manifest):
     if not pi_cfg.get("console", False):
         cmd.append("--noconsole")
 
-    # Icon
-    icon = pi_cfg.get("icon", "")
-    if icon:
-        icon_path = Path(icon)
-        if not icon_path.is_absolute():
-            icon_path = source_dir / icon_path
-        if icon_path.exists():
-            cmd.extend(["--icon", str(icon_path)])
+    # Icon — prefer generated ico, then fall back to manifest setting
+    if ICON_FILE.exists():
+        cmd.extend(["--icon", str(ICON_FILE)])
+    else:
+        icon = pi_cfg.get("icon", "")
+        if icon:
+            icon_path = Path(icon)
+            if not icon_path.is_absolute():
+                icon_path = source_dir / icon_path
+            if icon_path.exists():
+                cmd.extend(["--icon", str(icon_path)])
 
     # Hidden imports
     for imp in pi_cfg.get("hidden_imports", []):
@@ -235,10 +321,9 @@ def _build_installer(manifest, nova_app_dir, app_name, debug=False):
         total_files = sum(1 for _ in nova_app_dir.rglob("*") if _.is_file())
         print(f"  Bundling {total_files} pre-built app files")
 
-    # Icon (if available)
-    icon_path = ROOT / "installer.ico"
-    if icon_path.exists():
-        cmd.extend(["--icon", str(icon_path)])
+    # Icon — use generated ico
+    if ICON_FILE.exists():
+        cmd.extend(["--icon", str(ICON_FILE)])
 
     cmd.append(str(MAIN_SCRIPT))
 
@@ -277,6 +362,11 @@ def build():
     print()
     print("  Nova Installer — Build System")
     print(f"  Building: {manifest['app']['name']} v{manifest['app']['version']}")
+    print()
+
+    # Generate .ico from SVG template
+    print("  Generating application icon...")
+    _generate_ico(ICON_FILE)
     print()
 
     # Step 1 & 2: Build and prepare the Nova app

@@ -129,7 +129,9 @@ class MainWindow(QMainWindow):
         self._plugin_icons: Dict[str, str] = {}
 
         self.setWindowTitle("Nova")
-        self.setWindowIcon(IconManager.get_pixmap('logo', StyleManager.get_colour("accent"), 25))
+        self.setWindowIcon(IconManager.get_app_icon(
+            primary=StyleManager.get_colour("accent"),
+        ))
         self.setObjectName("NovaMainWindow")
 
         central = QWidget()

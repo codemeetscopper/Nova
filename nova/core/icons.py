@@ -4,7 +4,7 @@ import logging
 from typing import Optional
 
 from PySide6.QtCore import QByteArray, Qt
-from PySide6.QtGui import QColor, QImage, QPainter, QPixmap
+from PySide6.QtGui import QColor, QIcon, QImage, QPainter, QPixmap
 from PySide6.QtSvg import QSvgRenderer
 
 _log = logging.getLogger(__name__)
@@ -64,3 +64,26 @@ class IconManager:
         painter.end()
 
         return QPixmap.fromImage(img)
+
+    @classmethod
+    def get_app_icon(cls, primary: str = "#0088CC",
+                     secondary: str = "#00BBFF") -> QIcon:
+        """Render the nova_icon SVG at multiple sizes and return a QIcon."""
+        from nova.resources.builtin_icons import ICONS
+
+        svg_template = ICONS.get("nova_icon", "")
+        svg_str = svg_template.format(primary=primary, secondary=secondary)
+
+        icon = QIcon()
+        for size in (16, 24, 32, 48, 64, 128, 256):
+            data = QByteArray(svg_str.encode())
+            renderer = QSvgRenderer(data)
+            if not renderer.isValid():
+                continue
+            img = QImage(size, size, QImage.Format_ARGB32)
+            img.fill(Qt.transparent)
+            painter = QPainter(img)
+            renderer.render(painter)
+            painter.end()
+            icon.addPixmap(QPixmap.fromImage(img))
+        return icon

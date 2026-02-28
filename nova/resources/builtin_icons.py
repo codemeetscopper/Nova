@@ -187,6 +187,21 @@ ICONS: dict[str, str] = {
 
 # Backward-compatibility aliases — existing code uses "action_*" / "navigation_*" prefixes
 ICONS.update({
+    # ── App icon (two-colour, not tinted via SourceIn) ──────────────────────
+    "nova_icon": (
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">'
+        '<defs>'
+        '<linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">'
+        '<stop offset="0%" stop-color="{primary}"/>'
+        '<stop offset="100%" stop-color="{secondary}"/>'
+        '</linearGradient>'
+        '</defs>'
+        '<rect rx="48" width="256" height="256" fill="url(#g1)"/>'
+        '<path d="M72 192V64h28l56 88V64h28v128h-28l-56-88v88z" '
+        'fill="white" fill-opacity="0.95"/>'
+        '</svg>'
+    ),
+
     "action_home":             ICONS["home"],
     "action_extension":        ICONS["extension"],
     "action_settings":         ICONS["settings"],

@@ -131,12 +131,25 @@ def _build_install_config(manifest, source_dir, install_path,
 
 # ── Fresh install flow ─────────────────────────────────────────
 
+def _plugins_source_dir(source_dir: Path) -> Path:
+    """Return the directory containing the plugins/ folder.
+
+    In frozen mode the plugins are bundled inside ``_nova_app/``,
+    not at the source root.
+    """
+    if getattr(sys, "frozen", False):
+        prebuild = Path(sys._MEIPASS) / "_nova_app"
+        if (prebuild / "plugins").exists():
+            return prebuild
+    return source_dir
+
+
 def _run_install_mode(app, window, engine, manifest, cfg,
                       source_dir, license_file, reg_key):
     """Standard installation flow."""
 
-    # Discover plugins from source directory
-    discovered_plugins = discover_plugins(source_dir)
+    # Discover plugins from source directory (or pre-built bundle)
+    discovered_plugins = discover_plugins(_plugins_source_dir(source_dir))
 
     welcome = WelcomePage(
         app_name=manifest.name,
@@ -276,7 +289,7 @@ def _run_maintenance_mode(app, window, engine, manifest, cfg,
                           source_dir, existing_path, reg_key):
     """Maintenance flow: Modify, Repair, Update, or Uninstall."""
 
-    discovered_plugins = discover_plugins(source_dir)
+    discovered_plugins = discover_plugins(_plugins_source_dir(source_dir))
 
     maintenance_pg = MaintenancePage(
         app_name=manifest.name,

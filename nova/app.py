@@ -163,6 +163,11 @@ def _cascade_theme_to_plugins(pm, ctx) -> None:
 def run(ctx) -> None:
     app = QApplication.instance() or QApplication(sys.argv)
 
+    # Set application-level icon (taskbar, window headers, Alt-Tab)
+    from nova.core.icons import IconManager
+    accent = ctx.config.get_value("appearance.accent", "#0088CC")
+    app.setWindowIcon(IconManager.get_app_icon(primary=accent))
+
     _apply_font_from_config(ctx.config, app)
 
     nova_qss = Path(__file__).parent /"resources" / "nova.qss"
