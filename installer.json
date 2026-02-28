@@ -7,7 +7,7 @@
         "url": "https://github.com/nova-app/nova",
         "icon": "",
         "license_file": "",
-        "accent_color": "#39AE86"
+        "accent_color": "#1b85b8"
     },
     "install": {
         "source_dir": "./",

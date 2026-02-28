@@ -1,7 +1,7 @@
 """Finish page — shown after installation completes."""
 from __future__ import annotations
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QSize
 from PySide6.QtWidgets import (
     QCheckBox, QFrame, QLabel, QSizePolicy,
     QVBoxLayout, QWidget,
@@ -62,9 +62,10 @@ class FinishPage(QWidget):
         v.addWidget(sep)
 
         # Launch checkbox
-        self._launch_cb = QCheckBox(f"Launch {app_name} after closing")
+        self._launch_cb = QCheckBox(f"Launch {app_name} now")
         self._launch_cb.setObjectName("LaunchCheckbox")
         self._launch_cb.setChecked(True)
+        self._launch_cb.setIconSize(QSize(15, 15))
         self._launch_cb.setCursor(Qt.PointingHandCursor)
         v.addWidget(self._launch_cb, 0, Qt.AlignCenter)
 

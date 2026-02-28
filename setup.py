@@ -29,6 +29,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).parent
+REQUIREMENTS_FILE = ROOT / "requirements.txt"
 INSTALLER_PKG = ROOT / "installer"
 MAIN_SCRIPT = ROOT / "installer_main.py"
 DIST_DIR = ROOT / "dist"
@@ -117,6 +118,24 @@ def _generate_ico(output_path: Path) -> Path:
     finally:
         if created_app:
             del app
+
+
+def _install_requirements():
+    """Install dependencies from requirements.txt."""
+    if not REQUIREMENTS_FILE.exists():
+        print("  WARNING: requirements.txt not found, skipping dependency install")
+        return
+
+    print("  Installing dependencies from requirements.txt...")
+    result = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "-r", str(REQUIREMENTS_FILE)],
+        capture_output=True, text=True,
+    )
+    if result.returncode != 0:
+        print(f"  ERROR: Failed to install requirements:\n{result.stderr}")
+        sys.exit(1)
+    print("  Dependencies installed successfully.")
+    print()
 
 
 def _load_manifest():
@@ -363,6 +382,9 @@ def build():
     print("  Nova Installer — Build System")
     print(f"  Building: {manifest['app']['name']} v{manifest['app']['version']}")
     print()
+
+    # Install dependencies before building
+    _install_requirements()
 
     # Generate .ico from SVG template
     print("  Generating application icon...")
