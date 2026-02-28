@@ -3,8 +3,8 @@ from __future__ import annotations
 
 from PySide6.QtCore import QSize, Qt, Signal
 from PySide6.QtWidgets import (
-    QFrame, QHBoxLayout, QLabel, QSizePolicy,
-    QVBoxLayout, QWidget,
+    QFrame, QHBoxLayout, QLabel, QScrollArea,
+    QSizePolicy, QVBoxLayout, QWidget,
 )
 
 from installer.core.icons import IconManager
@@ -22,17 +22,17 @@ class _ActionCard(QFrame):
         self.setObjectName("TypeCard")
         self.setFrameShape(QFrame.StyledPanel)
         self.setCursor(Qt.PointingHandCursor)
-        self.setMinimumHeight(62)
+        self.setMinimumHeight(56)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self._selected = False
 
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(14, 10, 14, 10)
-        layout.setSpacing(12)
+        layout.setContentsMargins(12, 8, 12, 8)
+        layout.setSpacing(10)
 
         # Icon
         self._icon_label = QLabel()
-        self._icon_label.setFixedSize(28, 28)
+        self._icon_label.setFixedSize(24, 24)
         self._icon_label.setAlignment(Qt.AlignCenter)
         self._icon_name = icon_name
         self._refresh_icon()
@@ -40,7 +40,7 @@ class _ActionCard(QFrame):
 
         # Text
         text_layout = QVBoxLayout()
-        text_layout.setSpacing(2)
+        text_layout.setSpacing(1)
 
         self._title_label = QLabel(title)
         self._title_label.setObjectName("TypeCardTitle")
@@ -90,7 +90,7 @@ class _ActionCard(QFrame):
         accent = StyleManager.get_colour("accent")
         fg1 = StyleManager.get_colour("fg1")
         color = accent if self._selected else fg1
-        px = IconManager.get_pixmap(self._icon_name, color, 22)
+        px = IconManager.get_pixmap(self._icon_name, color, 20)
         if px and not px.isNull():
             self._icon_label.setPixmap(px)
             self._icon_label.setStyleSheet("background: transparent;")
@@ -112,9 +112,20 @@ class MaintenancePage(QWidget):
         self.setObjectName("InstallTypePage")
         self._action = "repair"
 
-        root = QVBoxLayout(self)
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
+        outer.setSpacing(0)
+
+        scroll = QScrollArea()
+        scroll.setObjectName("MaintenanceScroll")
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+
+        content = QWidget()
+        root = QVBoxLayout(content)
         root.setContentsMargins(20, 20, 20, 20)
-        root.setSpacing(10)
+        root.setSpacing(8)
 
         title = QLabel(f"{app_name} is already installed")
         title.setObjectName("PageTitle")
@@ -133,7 +144,7 @@ class MaintenancePage(QWidget):
             path_label.setWordWrap(True)
             root.addWidget(path_label)
 
-        root.addSpacing(4)
+        root.addSpacing(2)
 
         # Modify card
         self._modify_card = _ActionCard(
@@ -148,7 +159,7 @@ class MaintenancePage(QWidget):
         self._repair_card = _ActionCard(
             "build",
             "Repair",
-            "Re-install the application to fix corrupted or missing files.",
+            "Re-install to fix corrupted or missing files.",
         )
         self._repair_card.clicked.connect(lambda: self._select("repair"))
         root.addWidget(self._repair_card)
@@ -157,7 +168,7 @@ class MaintenancePage(QWidget):
         self._update_card = _ActionCard(
             "update",
             "Update",
-            "Re-build and install the latest version of the application.",
+            "Re-build and install the latest version.",
         )
         self._update_card.clicked.connect(lambda: self._select("update"))
         root.addWidget(self._update_card)
@@ -172,6 +183,9 @@ class MaintenancePage(QWidget):
         root.addWidget(self._uninstall_card)
 
         root.addStretch()
+
+        scroll.setWidget(content)
+        outer.addWidget(scroll)
 
         # Default selection
         self._select("repair")

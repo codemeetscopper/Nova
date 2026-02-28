@@ -105,12 +105,20 @@ def main() -> None:
     # Give the bridge 250 ms to connect before starting the plugin
     QTimer.singleShot(250, thread.start)
 
-    # Safety net: if the thread is still alive 5 s after stop() was called,
-    # force-quit. This prevents zombie workers.
+    # Safety net: if the plugin has been told to stop but the thread is still
+    # alive, force-quit after a generous timeout. This prevents zombie workers
+    # when the plugin's start() loop ignores the is_running flag.
     def _force_quit_if_stopped():
-        if not plugin.is_running:
+        if not plugin.is_running and thread.isRunning():
             _log.warning("Worker: force-quitting (plugin didn't finish in time)")
             QCoreApplication.quit()
+
+    # Schedule the safety net when the bridge receives a stop command.
+    bridge.command_received.connect(
+        lambda cmd, _data: (
+            QTimer.singleShot(5000, _force_quit_if_stopped) if cmd == "stop" else None
+        )
+    )
 
     # ── Qt event loop ──────────────────────────────────────────
     sys.exit(app.exec())

@@ -12,8 +12,8 @@ from typing import Any
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QFileDialog, QFrame, QHBoxLayout, QHeaderView, QLabel,
-    QLineEdit, QMessageBox, QPushButton, QTableWidget,
-    QTableWidgetItem, QVBoxLayout, QWidget,
+    QLineEdit, QMessageBox, QPushButton, QScrollArea,
+    QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget,
 )
 
 from nova.core.plugin_base import PluginBase
@@ -30,43 +30,53 @@ class Plugin(PluginBase):
     def create_widget(self, parent: QWidget | None = None) -> QWidget:
         frame = QFrame(parent)
         frame.setObjectName("PdfMergerFrame")
-        v = QVBoxLayout(frame)
-        v.setContentsMargins(16, 16, 16, 16)
-        v.setSpacing(10)
+        outer = QVBoxLayout(frame)
+        outer.setContentsMargins(0, 0, 0, 0)
+
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+
+        content = QWidget()
+        v = QVBoxLayout(content)
+        v.setContentsMargins(24, 24, 24, 24)
+        v.setSpacing(12)
+
+        # Title
+        title = QLabel("PDF Merger")
+        title.setObjectName("SysMonTitle")
+        v.addWidget(title)
 
         # Toolbar
         toolbar = QHBoxLayout()
-        toolbar.setSpacing(8)
+        toolbar.setSpacing(6)
 
         btn_add = QPushButton("Add PDFs")
-        btn_add.setObjectName("PdfMergerAdd")
         btn_add.setCursor(Qt.PointingHandCursor)
         btn_add.clicked.connect(self._load_pdfs)
         toolbar.addWidget(btn_add)
 
-        btn_clear = QPushButton("Clear List")
-        btn_clear.setObjectName("PdfMergerClear")
+        btn_clear = QPushButton("Clear")
         btn_clear.setCursor(Qt.PointingHandCursor)
         btn_clear.clicked.connect(self._clear_list)
         toolbar.addWidget(btn_clear)
 
-        toolbar.addSpacing(12)
+        toolbar.addSpacing(4)
 
         btn_up = QPushButton("Move Up")
-        btn_up.setObjectName("PdfMergerMoveUp")
         btn_up.setCursor(Qt.PointingHandCursor)
         btn_up.clicked.connect(self._move_up)
         toolbar.addWidget(btn_up)
 
         btn_down = QPushButton("Move Down")
-        btn_down.setObjectName("PdfMergerMoveDown")
         btn_down.setCursor(Qt.PointingHandCursor)
         btn_down.clicked.connect(self._move_down)
         toolbar.addWidget(btn_down)
 
         toolbar.addStretch()
 
-        btn_merge = QPushButton("Merge")
+        btn_merge = QPushButton("Merge PDFs")
         btn_merge.setObjectName("PdfMergerMerge")
         btn_merge.setCursor(Qt.PointingHandCursor)
         btn_merge.clicked.connect(self._merge_pdfs)
@@ -76,7 +86,7 @@ class Plugin(PluginBase):
 
         # Table
         self._table = QTableWidget(0, 3)
-        self._table.setObjectName("PdfMergerTable")
+        self._table.setAlternatingRowColors(True)
         self._table.setSelectionBehavior(QTableWidget.SelectRows)
         self._table.setSelectionMode(QTableWidget.SingleSelection)
         self._table.setHorizontalHeaderLabels(
@@ -87,7 +97,11 @@ class Plugin(PluginBase):
         header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
         self._table.setColumnWidth(1, 200)
         self._table.setColumnWidth(2, 80)
+        self._table.verticalHeader().setVisible(False)
         v.addWidget(self._table)
+
+        scroll.setWidget(content)
+        outer.addWidget(scroll)
 
         return frame
 
@@ -113,12 +127,13 @@ class Plugin(PluginBase):
             self._add_row(file, f"1-{len(reader.pages)} or leave empty = all")
 
     def _add_row(self, filepath: str, placeholder: str, pages_text: str = ""):
-        """Insert a new row at the bottom with file path, page input, remove button."""
         row = self._table.rowCount()
         self._table.insertRow(row)
 
-        item = QTableWidgetItem(filepath)
+        item = QTableWidgetItem(Path(filepath).name)
         item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
+        item.setToolTip(filepath)
+        item.setData(Qt.UserRole, filepath)
         self._table.setItem(row, 0, item)
 
         page_input = QLineEdit()
@@ -133,7 +148,6 @@ class Plugin(PluginBase):
         self._table.setCellWidget(row, 2, btn_remove)
 
     def _remove_current(self, btn: QPushButton):
-        """Find the row containing this button and remove it."""
         if not self._table:
             return
         for r in range(self._table.rowCount()):
@@ -146,37 +160,42 @@ class Plugin(PluginBase):
             self._table.setRowCount(0)
 
     def _swap_rows(self, row_a: int, row_b: int):
-        """Swap two rows in the table, preserving cell widget data."""
         if not self._table:
             return
 
         # Read data from both rows
-        path_a = self._table.item(row_a, 0).text()
-        path_b = self._table.item(row_b, 0).text()
+        item_a = self._table.item(row_a, 0)
+        item_b = self._table.item(row_b, 0)
+        name_a, tip_a, data_a = item_a.text(), item_a.toolTip(), item_a.data(Qt.UserRole)
+        name_b, tip_b, data_b = item_b.text(), item_b.toolTip(), item_b.data(Qt.UserRole)
 
         widget_a = self._table.cellWidget(row_a, 1)
         widget_b = self._table.cellWidget(row_b, 1)
         text_a = widget_a.text() if widget_a else ""
         text_b = widget_b.text() if widget_b else ""
-        placeholder_a = widget_a.placeholderText() if widget_a else ""
-        placeholder_b = widget_b.placeholderText() if widget_b else ""
+        ph_a = widget_a.placeholderText() if widget_a else ""
+        ph_b = widget_b.placeholderText() if widget_b else ""
 
         # Swap file path items
-        self._table.item(row_a, 0).setText(path_b)
-        self._table.item(row_b, 0).setText(path_a)
+        item_a.setText(name_b)
+        item_a.setToolTip(tip_b)
+        item_a.setData(Qt.UserRole, data_b)
+        item_b.setText(name_a)
+        item_b.setToolTip(tip_a)
+        item_b.setData(Qt.UserRole, data_a)
 
         # Recreate page input widgets with swapped data
-        new_input_a = QLineEdit()
-        new_input_a.setPlaceholderText(placeholder_b)
+        new_a = QLineEdit()
+        new_a.setPlaceholderText(ph_b)
         if text_b:
-            new_input_a.setText(text_b)
-        self._table.setCellWidget(row_a, 1, new_input_a)
+            new_a.setText(text_b)
+        self._table.setCellWidget(row_a, 1, new_a)
 
-        new_input_b = QLineEdit()
-        new_input_b.setPlaceholderText(placeholder_a)
+        new_b = QLineEdit()
+        new_b.setPlaceholderText(ph_a)
         if text_a:
-            new_input_b.setText(text_a)
-        self._table.setCellWidget(row_b, 1, new_input_b)
+            new_b.setText(text_a)
+        self._table.setCellWidget(row_b, 1, new_b)
 
     def _move_up(self):
         if not self._table:
@@ -198,7 +217,6 @@ class Plugin(PluginBase):
 
     @staticmethod
     def _parse_pages(text: str, max_pages: int) -> list[int]:
-        """Convert page range string into sorted list of page numbers."""
         if not text.strip():
             return list(range(1, max_pages + 1))
         pages: set[int] = set()
@@ -230,7 +248,7 @@ class Plugin(PluginBase):
 
         writer = PdfWriter()
         for row in range(self._table.rowCount()):
-            file = self._table.item(row, 0).text()
+            file = self._table.item(row, 0).data(Qt.UserRole)
             page_input = self._table.cellWidget(row, 1).text()
             reader = PdfReader(file)
             try:

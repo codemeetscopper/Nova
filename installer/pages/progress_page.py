@@ -4,10 +4,11 @@ from __future__ import annotations
 import logging
 from typing import Optional
 
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import QSize, Qt, Signal
+from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
-    QFrame, QLabel, QProgressBar, QSizePolicy,
-    QTextEdit, QVBoxLayout, QWidget,
+    QFrame, QHBoxLayout, QLabel, QProgressBar, QPushButton,
+    QSizePolicy, QTextEdit, QVBoxLayout, QWidget,
 )
 
 from installer.core.icons import IconManager
@@ -24,10 +25,11 @@ class ProgressPage(QWidget):
     def __init__(self, parent: QWidget | None = None):
         super().__init__(parent)
         self.setObjectName("ProgressPage")
+        self._log_expanded = False
 
         root = QVBoxLayout(self)
         root.setContentsMargins(20, 20, 20, 20)
-        root.setSpacing(10)
+        root.setSpacing(8)
 
         self._title = QLabel("Installing...")
         self._title.setObjectName("PageTitle")
@@ -56,22 +58,56 @@ class ProgressPage(QWidget):
         self._progress.setFormat("")
         root.addWidget(self._progress)
 
-        # Percentage label
+        # Row: percentage left, expander toggle right — pinned under progress bar
+        pct_row = QHBoxLayout()
+        pct_row.setSpacing(0)
+
         self._pct_label = QLabel("0%")
         self._pct_label.setObjectName("ProgressPct")
-        self._pct_label.setAlignment(Qt.AlignRight)
-        root.addWidget(self._pct_label)
+        pct_row.addWidget(self._pct_label)
 
-        # Log area
-        log_title = QLabel("INSTALLATION LOG")
-        log_title.setObjectName("SectionLabel")
-        root.addWidget(log_title)
+        pct_row.addStretch()
 
+        self._log_toggle = QPushButton()
+        self._log_toggle.setObjectName("LogExpanderButton")
+        self._log_toggle.setFixedSize(24, 24)
+        self._log_toggle.setCursor(Qt.PointingHandCursor)
+        self._log_toggle.setToolTip("Show installation log")
+        self._log_toggle.clicked.connect(self._toggle_log)
+        self._update_chevron_icon()
+        pct_row.addWidget(self._log_toggle)
+
+        root.addLayout(pct_row)
+
+        # Log area — hidden by default, fills remaining space when visible
         self._log = QTextEdit()
         self._log.setObjectName("ProgressLog")
         self._log.setReadOnly(True)
         self._log.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self._log.setVisible(False)
         root.addWidget(self._log, 1)
+
+        # Spacer to keep progress info centered when log is hidden
+        self._spacer = QWidget()
+        self._spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        root.addWidget(self._spacer, 1)
+
+    def _update_chevron_icon(self):
+        fg2 = StyleManager.get_colour("fg2")
+        icon_name = "chevron_up" if self._log_expanded else "chevron_down"
+        px = IconManager.get_pixmap(icon_name, fg2, 16)
+        if px and not px.isNull():
+            self._log_toggle.setIcon(QIcon(px))
+            self._log_toggle.setIconSize(QSize(16, 16))
+
+    def _toggle_log(self):
+        self._log_expanded = not self._log_expanded
+        self._log.setVisible(self._log_expanded)
+        self._spacer.setVisible(not self._log_expanded)
+        self._log_toggle.setToolTip(
+            "Hide installation log" if self._log_expanded else "Show installation log"
+        )
+        self._update_chevron_icon()
 
     def set_progress(self, value: int):
         self._progress.setValue(value)
@@ -96,7 +132,7 @@ class ProgressPage(QWidget):
             self._title.setText("Installation Failed")
             self._subtitle.setText("An error occurred during installation.")
             self._title.setStyleSheet(
-                f"color: #EF4444; font-size: 22px; font-weight: 300;"
+                "color: #EF4444; font-size: 22px; font-weight: 300;"
             )
 
     def reset(self):
@@ -106,3 +142,7 @@ class ProgressPage(QWidget):
         self._progress.setValue(0)
         self._pct_label.setText("0%")
         self._log.clear()
+        self._log_expanded = False
+        self._log.setVisible(False)
+        self._spacer.setVisible(True)
+        self._update_chevron_icon()

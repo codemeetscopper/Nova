@@ -168,6 +168,17 @@ ICONS: dict[str, str] = {
         'v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"/>'
         "</svg>"
     ),
+    # ── Expander chevrons ──────────────────────────────────────────────
+    "chevron_down": (
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">'
+        '<path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>'
+        "</svg>"
+    ),
+    "chevron_up": (
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">'
+        '<path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6 1.41 1.41z"/>'
+        "</svg>"
+    ),
     # ── Title bar icons ────────────────────────────────────────────────
     "minimize": (
         '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">'

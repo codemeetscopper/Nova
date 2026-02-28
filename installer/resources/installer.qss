@@ -269,6 +269,8 @@ QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0; }
 
 /* ─── Install type page ─────────────────────────────────── */
 #InstallTypePage { background: <bg>; }
+#MaintenanceScroll { background: <bg>; border: none; }
+#MaintenanceScroll > QWidget > QWidget { background: <bg>; }
 #TypeCard {
     background: <bg1>;
     border: 1px solid <bg2>;
@@ -297,11 +299,6 @@ QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0; }
 
 /* ─── Path page ─────────────────────────────────────────── */
 #PathPage { background: <bg>; }
-#PathCard {
-    background: <bg1>;
-    border: 1px solid <bg2>;
-    border-radius: 4px;
-}
 #PathLabel {
     font-size: 10px;
     font-weight: 700;
@@ -310,13 +307,13 @@ QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0; }
     background: transparent;
 }
 #PathEdit {
-    background: <bg>;
+    background: <bg1>;
     border: 1px solid <bg2>;
-    border-radius: 3px;
-    padding: 6px 10px;
+    border-radius: 4px;
+    padding: 7px 12px;
     color: <fg>;
     font-size: 12px;
-    min-height: 28px;
+    min-height: 30px;
 }
 #PathEdit:focus {
     border-color: <accent>;
@@ -325,16 +322,23 @@ QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0; }
     background: <accent>;
     color: white;
     border: none;
-    border-radius: 3px;
-    padding: 6px 16px;
+    border-radius: 4px;
+    padding: 7px 18px;
     font-size: 12px;
     font-weight: 500;
-    min-height: 28px;
+    min-height: 30px;
 }
 #BrowseButton:hover { background: <accent_d1>; }
+#SpaceLabel {
+    font-size: 11px;
+    color: <fg2>;
+    background: transparent;
+}
 
 /* ─── Options page ──────────────────────────────────────── */
 #OptionsPage { background: <bg>; }
+#OptionsScroll { background: <bg>; border: none; }
+#OptionsScroll > QWidget > QWidget { background: <bg>; }
 #OptionsGroupCard {
     background: <bg1>;
     border: 1px solid <bg2>;
@@ -403,6 +407,16 @@ QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0; }
     font-size: 10px;
     color: <fg2>;
     background: transparent;
+}
+#LogExpanderButton {
+    background: transparent;
+    border: 1px solid <bg2>;
+    border-radius: 4px;
+    padding: 2px;
+}
+#LogExpanderButton:hover {
+    background: <accent_ln>;
+    border-color: <accent_l2>;
 }
 #ProgressLog {
     background: <bg1>;

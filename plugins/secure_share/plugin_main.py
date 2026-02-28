@@ -4,7 +4,7 @@ Secure Share Plugin
 Encrypted file sharing over LAN with UDP auto-discovery and passphrase
 protection (Fernet + PBKDF2).
 
-Host side: tabbed UI (Server / Client) for receiving and sending files.
+Host side: tabbed UI (Receive / Send) for receiving and sending files.
 Worker side: idle (networking runs in daemon threads on the host).
 
 Dependencies: cryptography, PySide6
@@ -26,7 +26,7 @@ from PySide6.QtCore import QCoreApplication, QEvent, QObject, Qt, Signal
 from PySide6.QtWidgets import (
     QFileDialog, QFormLayout, QFrame, QGroupBox, QHBoxLayout, QLabel,
     QLineEdit, QListWidget, QMessageBox, QProgressBar, QPushButton,
-    QTabWidget, QVBoxLayout, QWidget,
+    QScrollArea, QTabWidget, QVBoxLayout, QWidget,
 )
 
 from nova.core.plugin_base import PluginBase
@@ -188,7 +188,7 @@ class _FileServer(threading.Thread):
         bc_stop = threading.Event()
         bc = _DiscoveryBroadcaster(socket.gethostname(), self.port, bc_stop)
         bc.start()
-        self._log(f"Server listening on port {self.port}")
+        self._log(f"Listening on port {self.port}")
 
         try:
             while not self.stop_event.is_set():
@@ -265,7 +265,7 @@ class _FileServer(threading.Thread):
                 prefix=filename + ".", dir=str(self.save_folder),
             )
             os.close(fd)
-            self._log(f"Receiving '{filename}' ({filesize} bytes)")
+            self._log(f"Receiving '{filename}' ({filesize:,} bytes)")
 
             received = 0
             last_sync = time.time()
@@ -295,7 +295,7 @@ class _FileServer(threading.Thread):
                             pass
                         last_sync = time.time()
                     if received % (1024 * 1024) < CHUNK_SIZE:
-                        self._log(f"  {received}/{filesize} bytes")
+                        self._log(f"  {received:,}/{filesize:,} bytes")
                     if received >= filesize:
                         break
 
@@ -314,7 +314,7 @@ class _FileServer(threading.Thread):
             outpath = self.save_folder / filename
             os.replace(tmp_path, str(outpath))
             tmp_path = None
-            self._log(f"Received '{filename}' ({actual} bytes)")
+            self._log(f"Saved '{filename}' ({actual:,} bytes)")
             try:
                 client.sendall(b"OK")
             except Exception:
@@ -420,17 +420,6 @@ class _FuncEvent(QEvent):
         self.fn = fn
 
 
-class _FuncEventFilter(QObject):
-    def eventFilter(self, obj, event):
-        if isinstance(event, _FuncEvent):
-            try:
-                event.fn()
-            except Exception:
-                pass
-            return True
-        return super().eventFilter(obj, event)
-
-
 # ── Server Tab ────────────────────────────────────────────────────
 class _ServerTab(QWidget):
     def __init__(self, parent: QWidget | None = None):
@@ -438,37 +427,53 @@ class _ServerTab(QWidget):
         self._server: _FileServer | None = None
         self._server_stop = threading.Event()
 
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(12, 12, 12, 12)
-        layout.setSpacing(8)
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
+
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+
+        content = QWidget()
+        layout = QVBoxLayout(content)
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setSpacing(12)
 
         form = QFormLayout()
+        form.setSpacing(8)
         self._port_input = QLineEdit("9009")
-        form.addRow("TCP Port:", self._port_input)
+        form.addRow("Port:", self._port_input)
 
         folder_row = QHBoxLayout()
         self._folder_label = QLabel(str(Path.home() / "Downloads"))
         self._folder_label.setWordWrap(True)
+        self._folder_label.setStyleSheet("background: transparent;")
         btn_folder = QPushButton("Browse")
         btn_folder.setCursor(Qt.PointingHandCursor)
         btn_folder.clicked.connect(self._choose_folder)
         folder_row.addWidget(self._folder_label, 1)
         folder_row.addWidget(btn_folder)
-        form.addRow("Save folder:", folder_row)
+        form.addRow("Save to:", folder_row)
 
         self._pass_input = QLineEdit()
         self._pass_input.setEchoMode(QLineEdit.Password)
+        self._pass_input.setPlaceholderText("Required — clients must use same passphrase")
         form.addRow("Passphrase:", self._pass_input)
 
         layout.addLayout(form)
 
         self._toggle_btn = QPushButton("Start Server")
+        self._toggle_btn.setObjectName("ServerToggle")
         self._toggle_btn.setCursor(Qt.PointingHandCursor)
         self._toggle_btn.clicked.connect(self._toggle_server)
         layout.addWidget(self._toggle_btn)
 
         self._log_list = QListWidget()
-        layout.addWidget(self._log_list)
+        layout.addWidget(self._log_list, 1)
+
+        scroll.setWidget(content)
+        outer.addWidget(scroll)
 
         self._save_folder = Path.home() / "Downloads"
 
@@ -490,6 +495,9 @@ class _ServerTab(QWidget):
             self._server.join(timeout=2.0)
             self._server = None
             self._toggle_btn.setText("Start Server")
+            self._toggle_btn.setProperty("running", False)
+            self._toggle_btn.style().unpolish(self._toggle_btn)
+            self._toggle_btn.style().polish(self._toggle_btn)
             self._log("Server stopping...")
             self._server_stop = threading.Event()
             return
@@ -517,6 +525,9 @@ class _ServerTab(QWidget):
         )
         self._server.start()
         self._toggle_btn.setText("Stop Server")
+        self._toggle_btn.setProperty("running", True)
+        self._toggle_btn.style().unpolish(self._toggle_btn)
+        self._toggle_btn.style().polish(self._toggle_btn)
         self._log("Server started")
 
     def cleanup(self):
@@ -535,20 +546,25 @@ class _ClientTab(QWidget):
         self._selected_target: Optional[Tuple[str, int]] = None
         self._filepath: Optional[str] = None
 
-        # Event filter for cross-thread UI updates
-        self._event_filter = _FuncEventFilter()
-        app = QCoreApplication.instance()
-        if app:
-            app.installEventFilter(self._event_filter)
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
 
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(12, 12, 12, 12)
-        layout.setSpacing(8)
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+
+        content = QWidget()
+        layout = QVBoxLayout(content)
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setSpacing(12)
 
         # Discovery
         disc_box = QGroupBox("Discovered Servers")
         disc_layout = QVBoxLayout()
+        disc_layout.setSpacing(8)
         self._server_list = QListWidget()
+        self._server_list.setMaximumHeight(100)
         self._server_list.itemClicked.connect(self._on_server_selected)
         disc_layout.addWidget(self._server_list)
         btn_refresh = QPushButton("Search Servers")
@@ -561,6 +577,7 @@ class _ClientTab(QWidget):
         # Manual connect
         manual_box = QGroupBox("Manual Connect")
         manual_layout = QHBoxLayout()
+        manual_layout.setSpacing(8)
         self._manual_input = QLineEdit()
         self._manual_input.setPlaceholderText("IP:Port (e.g. 192.168.1.5:9009)")
         btn_manual = QPushButton("Add")
@@ -573,7 +590,9 @@ class _ClientTab(QWidget):
 
         # File selection
         file_row = QHBoxLayout()
+        file_row.setSpacing(8)
         self._file_label = QLabel("No file selected")
+        self._file_label.setStyleSheet("background: transparent; color: palette(text);")
         btn_file = QPushButton("Choose File")
         btn_file.setCursor(Qt.PointingHandCursor)
         btn_file.clicked.connect(self._choose_file)
@@ -583,24 +602,35 @@ class _ClientTab(QWidget):
 
         # Passphrase
         pass_form = QFormLayout()
+        pass_form.setSpacing(8)
         self._pass_input = QLineEdit()
         self._pass_input.setEchoMode(QLineEdit.Password)
+        self._pass_input.setPlaceholderText("Must match server passphrase")
         pass_form.addRow("Passphrase:", self._pass_input)
         layout.addLayout(pass_form)
 
         # Send
         send_row = QHBoxLayout()
+        send_row.setSpacing(8)
         btn_send = QPushButton("Send File")
+        btn_send.setObjectName("SendButton")
         btn_send.setCursor(Qt.PointingHandCursor)
         btn_send.clicked.connect(self._send_file)
         self._progress = QProgressBar()
         self._progress.setRange(0, 100)
+        self._progress.setTextVisible(False)
         send_row.addWidget(btn_send)
         send_row.addWidget(self._progress, 1)
         layout.addLayout(send_row)
 
         self._status_label = QLabel("")
+        self._status_label.setStyleSheet(
+            "background: transparent; font-size: 11px;"
+        )
         layout.addWidget(self._status_label)
+
+        scroll.setWidget(content)
+        outer.addWidget(scroll)
 
         # Client
         self._client = _FileClient()
@@ -650,7 +680,7 @@ class _ClientTab(QWidget):
         self._server_list.clear()
         for (host, port), info in items:
             name = info.get("name", "?")
-            self._server_list.addItem(f"{name} — {host}:{port}")
+            self._server_list.addItem(f"{name}  —  {host}:{port}")
 
     def _refresh_servers(self):
         with self._discovered_lock:
@@ -750,9 +780,32 @@ class Plugin(PluginBase):
     def create_widget(self, parent: QWidget | None = None) -> QWidget:
         frame = QFrame(parent)
         frame.setObjectName("SecureShareFrame")
-        v = QVBoxLayout(frame)
-        v.setContentsMargins(8, 8, 8, 8)
-        v.setSpacing(0)
+        outer = QVBoxLayout(frame)
+        outer.setContentsMargins(0, 0, 0, 0)
+
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+
+        content = QWidget()
+        v = QVBoxLayout(content)
+        v.setContentsMargins(24, 24, 24, 24)
+        v.setSpacing(12)
+
+        # Title
+        title = QLabel("Secure Share")
+        title.setObjectName("SysMonTitle")
+        v.addWidget(title)
+
+        subtitle = QLabel("Encrypted file transfer over LAN")
+        subtitle.setStyleSheet(
+            "font-size: 12px; background: transparent;"
+        )
+        subtitle.setObjectName("ClockSubtitle")
+        v.addWidget(subtitle)
+
+        v.addSpacing(4)
 
         tabs = QTabWidget()
         tabs.setObjectName("SecureShareTabs")
@@ -763,7 +816,11 @@ class Plugin(PluginBase):
         tabs.addTab(self._server_tab, "Receive")
         tabs.addTab(self._client_tab, "Send")
 
-        v.addWidget(tabs)
+        v.addWidget(tabs, 1)
+
+        scroll.setWidget(content)
+        outer.addWidget(scroll)
+
         return frame
 
     def on_data(self, key: str, value: Any) -> None:

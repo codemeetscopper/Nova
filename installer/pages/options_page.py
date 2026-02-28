@@ -6,7 +6,7 @@ from typing import Any, Dict, List
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QCheckBox, QFrame, QHBoxLayout, QLabel,
-    QSizePolicy, QVBoxLayout, QWidget,
+    QScrollArea, QSizePolicy, QVBoxLayout, QWidget,
 )
 
 from installer.core.icons import IconManager
@@ -78,7 +78,19 @@ class OptionsPage(QWidget):
         super().__init__(parent)
         self.setObjectName("OptionsPage")
 
-        root = QVBoxLayout(self)
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
+        outer.setSpacing(0)
+
+        # Scrollable content area
+        scroll = QScrollArea()
+        scroll.setObjectName("OptionsScroll")
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+
+        content = QWidget()
+        root = QVBoxLayout(content)
         root.setContentsMargins(20, 20, 20, 20)
         root.setSpacing(10)
 
@@ -170,6 +182,9 @@ class OptionsPage(QWidget):
             root.addWidget(comp_card)
 
         root.addStretch()
+
+        scroll.setWidget(content)
+        outer.addWidget(scroll)
 
     def get_options(self) -> Dict[str, Any]:
         return {

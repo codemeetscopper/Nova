@@ -356,7 +356,31 @@ QMainWindow, #NovaMainWindow { background-color: <bg>; }
 #PluginViewButton:disabled { color: <fg2>; }
 
 /* ─── Plugin widget pages ────────────────────────────────── */
-#ClockFrame, #SysMonFrame { background: <bg>; }
+#ClockFrame, #SysMonFrame, #PdfMergerFrame, #SecureShareFrame {
+    background: <bg>;
+}
+/* Override global max-height for buttons inside plugin frames */
+#PdfMergerFrame QPushButton,
+#SecureShareFrame QPushButton {
+    max-height: none;
+    min-height: 28px;
+    padding: 5px 12px;
+}
+/* Ensure inputs inside plugin frames have proper height */
+#SecureShareFrame QLineEdit {
+    min-height: 28px;
+}
+#SecureShareFrame QGroupBox {
+    padding-top: 14px;
+}
+/* Transparent scroll areas inside plugin frames */
+#PdfMergerFrame QScrollArea,
+#SecureShareFrame QScrollArea,
+#PdfMergerFrame QScrollArea > QWidget > QWidget,
+#SecureShareFrame QScrollArea > QWidget > QWidget {
+    background: transparent;
+    border: none;
+}
 #ClockLabel    { color: <fg>; background: transparent; }
 #ClockSubtitle { color: <fg2>; background: transparent; }
 #SysMonTitle   { font-size: 16px; font-weight: 600; color: <fg>; background: transparent; }
@@ -370,6 +394,141 @@ QMainWindow, #NovaMainWindow { background-color: <bg>; }
     min-height: 6px;
 }
 #StatProgressBar::chunk { background: <accent>; border-radius: 3px; }
+
+/* ─── Shared plugin table ───────────────────────────────── */
+QTableWidget {
+    background: <bg1>;
+    alternate-background-color: <bg>;
+    border: 1px solid <bg2>;
+    border-radius: 7px;
+    gridline-color: <bg2>;
+    color: <fg>;
+    selection-background-color: <accent_ln>;
+    selection-color: <accent>;
+}
+QTableWidget::item {
+    padding: 4px 8px;
+}
+QTableWidget::item:selected {
+    background: <accent_ln>;
+    color: <accent>;
+}
+QHeaderView::section {
+    background: <bg1>;
+    color: <fg2>;
+    border: none;
+    border-bottom: 1px solid <bg2>;
+    padding: 6px 8px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+/* ─── Shared plugin tab widget ──────────────────────────── */
+QTabWidget::pane {
+    background: <bg>;
+    border: 1px solid <bg2>;
+    border-top: none;
+    border-radius: 0 0 7px 7px;
+}
+QTabBar::tab {
+    background: <bg1>;
+    color: <fg2>;
+    border: 1px solid <bg2>;
+    border-bottom: none;
+    padding: 6px 18px;
+    font-size: 12px;
+    font-weight: 500;
+    min-width: 80px;
+}
+QTabBar::tab:first { border-top-left-radius: 7px; }
+QTabBar::tab:last  { border-top-right-radius: 7px; }
+QTabBar::tab:selected {
+    background: <bg>;
+    color: <accent>;
+    font-weight: 600;
+    border-bottom: 2px solid <accent>;
+}
+QTabBar::tab:hover:!selected {
+    background: <accent_ln>;
+    color: <accent>;
+}
+
+/* ─── Shared plugin list widget ─────────────────────────── */
+QListWidget {
+    background: <bg1>;
+    border: 1px solid <bg2>;
+    border-radius: 7px;
+    color: <fg>;
+    outline: none;
+    padding: 4px;
+}
+QListWidget::item {
+    padding: 5px 10px;
+    border-radius: 4px;
+}
+QListWidget::item:selected {
+    background: <accent_ln>;
+    color: <accent>;
+}
+QListWidget::item:hover:!selected {
+    background: <bg2>;
+}
+
+/* ─── Shared plugin progress bar ────────────────────────── */
+QProgressBar {
+    background: <bg2>;
+    border: none;
+    border-radius: 4px;
+    max-height: 8px;
+    min-height: 8px;
+    text-align: center;
+}
+QProgressBar::chunk {
+    background: <accent>;
+    border-radius: 4px;
+}
+
+/* ─── PDF Merger ────────────────────────────────────────── */
+#PdfMergerMerge {
+    background: <accent>;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 4px 16px;
+    font-weight: 600;
+    min-width: 70px;
+}
+#PdfMergerMerge:hover { background: <accent_d1>; }
+
+/* ─── Secure Share ──────────────────────────────────────── */
+#SecureShareTabs { background: <bg>; }
+#ServerToggle {
+    background: <accent>;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 6px 18px;
+    font-weight: 600;
+    min-height: 30px;
+}
+#ServerToggle:hover { background: <accent_d1>; }
+#ServerToggle[running="true"] {
+    background: #EF4444;
+}
+#ServerToggle[running="true"]:hover {
+    background: #DC2626;
+}
+#SendButton {
+    background: <accent>;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 6px 18px;
+    font-weight: 600;
+    min-height: 30px;
+    min-width: 90px;
+}
+#SendButton:hover { background: <accent_d1>; }
 
 /* ─── Log page ───────────────────────────────────────────── */
 #LogPage { background: <bg>; }

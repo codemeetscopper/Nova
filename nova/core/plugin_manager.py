@@ -478,16 +478,31 @@ class PluginManager(QObject):
             self.stop(plugin_id)
             record = self._records.get(plugin_id)
             if record and record.process:
-                record.process.waitForFinished(1500)
+                # Wait longer than the 2000 ms kill timer in stop() so we're
+                # certain the old process is dead before spawning a new one.
+                record.process.waitForFinished(3000)
 
-        # Drop the old record (close bridge)
+        # Drop the old record — disconnect all signals first so stale
+        # callbacks from the dying process/bridge don't touch the new record.
         record = self._records.pop(plugin_id, None)
-        if record and record.bridge:
-            try:
-                record.bridge.close()
-            except Exception:
-                pass
-            record.bridge.deleteLater()
+        if record:
+            if record.process:
+                try:
+                    record.process.finished.disconnect()
+                except RuntimeError:
+                    pass
+            if record.bridge:
+                try:
+                    record.bridge.data_received.disconnect()
+                    record.bridge.worker_ready.disconnect()
+                    record.bridge.worker_gone.disconnect()
+                except RuntimeError:
+                    pass
+                try:
+                    record.bridge.close()
+                except Exception:
+                    pass
+                record.bridge.deleteLater()
 
         # Generate a fresh socket name on reload
         if not self.load(plugin_id):

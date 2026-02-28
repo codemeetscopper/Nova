@@ -1,4 +1,4 @@
-"""Installation path selection page."""
+"""Installation path selection page — compact modern layout."""
 from __future__ import annotations
 
 import os
@@ -25,38 +25,26 @@ class PathPage(QWidget):
         self._app_name = app_name
 
         root = QVBoxLayout(self)
-        root.setContentsMargins(20, 20, 20, 20)
-        root.setSpacing(10)
+        root.setContentsMargins(20, 20, 20, 16)
+        root.setSpacing(8)
 
         title = QLabel("Installation Location")
         title.setObjectName("PageTitle")
         root.addWidget(title)
 
-        subtitle = QLabel(
-            f"Choose where to install {app_name}.\n"
-            "The application will be installed in a subfolder with its name."
-        )
+        subtitle = QLabel(f"Choose where to install {app_name}.")
         subtitle.setObjectName("PageSubtitle")
-        subtitle.setWordWrap(True)
         root.addWidget(subtitle)
 
-        root.addSpacing(4)
+        root.addSpacing(6)
 
-        # Path card
-        card = QFrame()
-        card.setObjectName("PathCard")
-        card.setFrameShape(QFrame.StyledPanel)
-        card_layout = QVBoxLayout(card)
-        card_layout.setContentsMargins(14, 14, 14, 14)
-        card_layout.setSpacing(8)
-
+        # Path input row — clean, no card wrapper
         path_label = QLabel("DESTINATION FOLDER")
         path_label.setObjectName("PathLabel")
-        card_layout.addWidget(path_label)
+        root.addWidget(path_label)
 
-        # Path input row
         row = QHBoxLayout()
-        row.setSpacing(8)
+        row.setSpacing(6)
 
         self._path_edit = QLineEdit()
         self._path_edit.setObjectName("PathEdit")
@@ -70,14 +58,12 @@ class PathPage(QWidget):
         browse_btn.clicked.connect(self._on_browse)
         row.addWidget(browse_btn)
 
-        card_layout.addLayout(row)
+        root.addLayout(row)
 
         # Disk space info
         self._space_label = QLabel()
         self._space_label.setObjectName("SpaceLabel")
-        card_layout.addWidget(self._space_label)
-
-        root.addWidget(card)
+        root.addWidget(self._space_label)
 
         # Non-empty directory warning
         self._warning_label = QLabel()
