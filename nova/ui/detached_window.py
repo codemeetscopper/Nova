@@ -132,9 +132,10 @@ class DetachedPluginWindow(QWidget):
         sep.setObjectName("DetachedHeaderSep")
         root.addWidget(sep)
 
-        # Plugin widget content
-        widget.setParent(self)
+        # Plugin widget content — must call show() because QStackedWidget
+        # hides non-current widgets, and that state persists after removal.
         root.addWidget(widget, 1)
+        widget.show()
 
     @property
     def page_id(self) -> str:
