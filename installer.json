@@ -1,0 +1,84 @@
+{
+    "app": {
+        "name": "Nova",
+        "version": "1.0.0",
+        "author": "Nova Team",
+        "description": "Nova is a futuristic, plugin-driven application platform built on PySide6.<br>Each plugin runs in an isolated subprocess for maximum stability and security.",
+        "url": "https://github.com/nova-app/nova",
+        "icon": "",
+        "license_file": "",
+        "accent_color": "#0088CC"
+    },
+    "install": {
+        "source_dir": "./",
+        "include": ["**/*"],
+        "exclude": [
+            "__pycache__",
+            "*.pyc",
+            ".git",
+            ".idea",
+            ".venv",
+            "node_modules",
+            "nova_installer",
+            "installer",
+            "build",
+            "dist",
+            ".claude"
+        ],
+        "default_dir": "",
+        "registry_key": "Nova",
+        "run_after_install": ""
+    },
+    "python": {
+        "required": true,
+        "create_venv": false,
+        "requirements": "",
+        "entry_script": "main.py"
+    },
+    "pyinstaller": {
+        "enabled": true,
+        "onefile": false,
+        "console": false,
+        "icon": "",
+        "extra_args": [],
+        "hidden_imports": [
+            "PySide6.QtWidgets",
+            "PySide6.QtGui",
+            "PySide6.QtCore",
+            "PySide6.QtSvg",
+            "PySide6.QtNetwork",
+            "nova",
+            "nova.app",
+            "nova.core.style",
+            "nova.core.icons",
+            "nova.core.config",
+            "nova.core.context",
+            "nova.core.paths",
+            "nova.core.plugin_manager",
+            "nova.core.plugin_base",
+            "nova.core.plugin_bridge",
+            "nova.core.plugin_spec",
+            "nova.core.plugin_state"
+        ],
+        "data_files": [
+            "nova/resources;nova/resources"
+        ],
+        "resource_dirs": [
+            "plugins"
+        ]
+    },
+    "components": [
+        {
+            "name": "Core Application",
+            "description": "The Nova application framework and built-in pages.",
+            "icon": "logo",
+            "default": true
+        },
+        {
+            "name": "Built-in Plugins",
+            "description": "Clock widget, system monitor, and demo plugins.",
+            "icon": "extension",
+            "default": true
+        }
+    ]
+}

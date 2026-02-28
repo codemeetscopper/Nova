@@ -17,7 +17,7 @@ from nova.core.plugin_base import PluginBase, PluginManifest
 from nova.core.plugin_bridge import MainBridge
 from nova.core.plugin_spec import validate_manifest
 from nova.core.plugin_state import PluginStateManager
-from nova.core.paths import get_state_path
+from nova.core.paths import get_app_root, get_state_path
 from nova import __version__ as NOVA_VERSION
 
 _log = logging.getLogger(__name__)
@@ -75,8 +75,7 @@ class PluginManager(QObject):
         # Track intentional stops so we don't mistake them for crashes.
         # On Windows, QProcess::terminate() causes CrashExit status.
         self._intentional_stops: Set[str] = set()
-        # project root is two levels up from nova/core/
-        self._project_root = Path(__file__).parent.parent.parent
+        self._project_root = get_app_root()
         # Persistent state store
         self._state = PluginStateManager(get_state_path())
 
@@ -207,12 +206,21 @@ class PluginManager(QObject):
             lambda code, status, pid=plugin_id: self._on_process_finished(pid, code, status)
         )
 
-        args = [
-            "-m", "nova.core.worker_host",
-            plugin_id,
-            str(self._plugins_dir),
-            record.socket_name,
-        ]
+        if getattr(sys, "frozen", False):
+            # Frozen (PyInstaller): reuse the exe with --worker flag
+            args = [
+                "--worker",
+                plugin_id,
+                str(self._plugins_dir),
+                record.socket_name,
+            ]
+        else:
+            args = [
+                "-m", "nova.core.worker_host",
+                plugin_id,
+                str(self._plugins_dir),
+                record.socket_name,
+            ]
         process.start(sys.executable, args)
         if not process.waitForStarted(3000):
             _log.error("PluginManager: failed to start process for '%s'", plugin_id)

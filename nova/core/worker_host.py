@@ -40,7 +40,10 @@ def main() -> None:
     app = QCoreApplication(sys.argv[:1])
 
     # Ensure project root is on sys.path so nova.core is importable
-    project_root = Path(__file__).parent.parent.parent
+    if getattr(sys, "frozen", False):
+        project_root = Path(sys.executable).parent
+    else:
+        project_root = Path(__file__).parent.parent.parent
     if str(project_root) not in sys.path:
         sys.path.insert(0, str(project_root))
 

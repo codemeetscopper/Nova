@@ -1,0 +1,470 @@
+/*
+ * Nova Installer — Flat Light Theme
+ * Compact layout, minimal padding, flat surfaces with subtle borders.
+ */
+
+/* ─── Global ─────────────────────────────────────────────── */
+* {
+    font-family: <font_family>;
+    font-size: 13px;
+    outline: none;
+}
+QWidget {
+    background-color: <bg>;
+    color: <fg>;
+    border: none;
+}
+
+/* ─── Scrollbars ─────────────────────────────────────────── */
+QScrollBar:vertical {
+    background: transparent; width: 4px; margin: 0;
+}
+QScrollBar::handle:vertical {
+    background: <bg2>; min-height: 20px; border-radius: 2px;
+}
+QScrollBar::handle:vertical:hover { background: <accent>; }
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
+
+QScrollBar:horizontal {
+    background: transparent; height: 4px; margin: 0;
+}
+QScrollBar::handle:horizontal {
+    background: <bg2>; min-width: 20px; border-radius: 2px;
+}
+QScrollBar::handle:horizontal:hover { background: <accent>; }
+QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0; }
+
+/* ─── Installer window ──────────────────────────────────── */
+#InstallerWindow { background-color: <bg>; }
+#InstallerStack { background: <bg>; }
+
+/* ─── Title bar (frameless) ────────────────────────────── */
+#TitleBar {
+    background: <bg>;
+    border: none;
+}
+#TitleBarSep {
+    background: <bg2>;
+    border: none;
+    max-height: 1px;
+}
+#TitleBarIcon {
+    background: transparent;
+    border: none;
+}
+#TitleBarTitle {
+    font-size: 12px;
+    font-weight: 500;
+    color: <fg1>;
+    background: transparent;
+}
+#TitleBarMinimize {
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+}
+#TitleBarMinimize:hover {
+    background: <bg2>;
+}
+#TitleBarClose {
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+}
+#TitleBarClose:hover {
+    background: #EF4444;
+}
+
+/* ─── Step topbar ────────────────────────────────────────── */
+#StepTopbar {
+    background-color: <bg>;
+    border: none;
+}
+#TopbarSep {
+    background: <bg2>;
+    border: none;
+    max-height: 1px;
+}
+#StepCircle {
+    background: transparent;
+}
+#StepLabel {
+    background: transparent;
+}
+#StepConnector {
+    background: transparent;
+}
+
+/* ─── Bottom bar ────────────────────────────────────────── */
+#BottomBar {
+    background: <bg>;
+}
+#BottomBarSep {
+    background: <bg2>;
+    border: none;
+    max-height: 1px;
+}
+#BottomBarBack {
+    background: transparent;
+    color: <fg1>;
+    border: 1px solid <bg2>;
+    border-radius: 4px;
+    padding: 6px 18px;
+    font-size: 12px;
+    font-weight: 500;
+    min-width: 80px;
+}
+#BottomBarBack:hover {
+    background: <accent_ln>;
+    color: <accent>;
+    border-color: <accent_l2>;
+}
+#BottomBarBack:disabled {
+    color: <fg2>;
+    border-color: <bg2>;
+}
+#BottomBarCancel {
+    background: transparent;
+    color: <fg2>;
+    border: 1px solid <bg2>;
+    border-radius: 4px;
+    padding: 6px 18px;
+    font-size: 12px;
+    font-weight: 500;
+    min-width: 80px;
+}
+#BottomBarCancel:hover {
+    color: #EF4444;
+    border-color: #EF4444;
+}
+#BottomBarNext {
+    background: <accent>;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 24px;
+    font-size: 12px;
+    font-weight: 600;
+    min-width: 100px;
+}
+#BottomBarNext:hover {
+    background: <accent_d1>;
+}
+#BottomBarNext:disabled {
+    background: <bg2>;
+    color: <fg2>;
+}
+
+/* ─── Page titles ───────────────────────────────────────── */
+#PageTitle {
+    font-size: 18px;
+    font-weight: 500;
+    color: <fg>;
+    background: transparent;
+}
+#PageSubtitle {
+    font-size: 11px;
+    color: <fg2>;
+    background: transparent;
+}
+#SectionLabel {
+    font-size: 10px;
+    font-weight: 700;
+    color: <fg2>;
+    letter-spacing: 1px;
+    background: transparent;
+    padding-left: 2px;
+    padding-bottom: 2px;
+}
+
+/* ─── Welcome page ──────────────────────────────────────── */
+#WelcomePage { background: <bg>; }
+#WelcomeCard {
+    background: <bg1>;
+    border: 1px solid <bg2>;
+    border-radius: 6px;
+}
+#WelcomeAppName {
+    font-size: 22px;
+    font-weight: 700;
+    color: <accent>;
+    letter-spacing: 2px;
+    background: transparent;
+}
+#WelcomeVersion {
+    font-size: 11px;
+    color: <fg2>;
+    background: transparent;
+}
+#WelcomeSep {
+    background: <bg2>;
+    border: none;
+    max-height: 1px;
+}
+#WelcomeDescription {
+    font-size: 12px;
+    color: <fg1>;
+    background: transparent;
+    line-height: 1.4;
+}
+#InstallNowButton {
+    background: <accent>;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 24px;
+    font-size: 13px;
+    font-weight: 600;
+}
+#InstallNowButton:hover {
+    background: <accent_d1>;
+}
+#CustomizeButton {
+    background: transparent;
+    color: <fg1>;
+    border: 1px solid <bg2>;
+    border-radius: 6px;
+    padding: 8px 24px;
+    font-size: 13px;
+    font-weight: 500;
+}
+#CustomizeButton:hover {
+    background: <accent_ln>;
+    color: <accent>;
+    border-color: <accent_l2>;
+}
+
+/* ─── License page ──────────────────────────────────────── */
+#LicensePage { background: <bg>; }
+#LicenseText {
+    background: <bg1>;
+    border: 1px solid <bg2>;
+    border-radius: 4px;
+    color: <fg1>;
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 11px;
+    padding: 8px;
+}
+#LicenseAcceptCheckbox {
+    color: <fg>;
+    font-size: 12px;
+    spacing: 6px;
+    background: transparent;
+}
+#LicenseAcceptCheckbox::indicator {
+    width: 16px;
+    height: 16px;
+    border: 1.5px solid <bg2>;
+    border-radius: 3px;
+    background: transparent;
+}
+#LicenseAcceptCheckbox::indicator:hover {
+    border-color: <accent>;
+}
+#LicenseAcceptCheckbox::indicator:checked {
+    background: <accent>;
+    border-color: <accent>;
+    image: url("<url_check>");
+}
+
+/* ─── Install type page ─────────────────────────────────── */
+#InstallTypePage { background: <bg>; }
+#TypeCard {
+    background: <bg1>;
+    border: 1px solid <bg2>;
+    border-radius: 4px;
+}
+#TypeCard:hover {
+    border-color: <accent_l2>;
+}
+#TypeCardTitle {
+    font-size: 13px;
+    font-weight: 600;
+    color: <fg>;
+    background: transparent;
+}
+#TypeCardDesc {
+    font-size: 11px;
+    color: <fg2>;
+    background: transparent;
+}
+#InstallTypeInfo {
+    font-size: 10px;
+    color: <fg2>;
+    background: transparent;
+    padding-left: 2px;
+}
+
+/* ─── Path page ─────────────────────────────────────────── */
+#PathPage { background: <bg>; }
+#PathCard {
+    background: <bg1>;
+    border: 1px solid <bg2>;
+    border-radius: 4px;
+}
+#PathLabel {
+    font-size: 10px;
+    font-weight: 700;
+    color: <fg2>;
+    letter-spacing: 1px;
+    background: transparent;
+}
+#PathEdit {
+    background: <bg>;
+    border: 1px solid <bg2>;
+    border-radius: 3px;
+    padding: 6px 10px;
+    color: <fg>;
+    font-size: 12px;
+    min-height: 28px;
+}
+#PathEdit:focus {
+    border-color: <accent>;
+}
+#BrowseButton {
+    background: <accent>;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    padding: 6px 16px;
+    font-size: 12px;
+    font-weight: 500;
+    min-height: 28px;
+}
+#BrowseButton:hover { background: <accent_d1>; }
+
+/* ─── Options page ──────────────────────────────────────── */
+#OptionsPage { background: <bg>; }
+#OptionsGroupCard {
+    background: <bg1>;
+    border: 1px solid <bg2>;
+    border-radius: 4px;
+}
+#OptionCard {
+    background: transparent;
+}
+#OptionTitle {
+    font-size: 12px;
+    font-weight: 500;
+    color: <fg>;
+    background: transparent;
+    padding: 0;
+}
+#OptionDesc {
+    font-size: 11px;
+    color: <fg2>;
+    background: transparent;
+    padding: 0;
+}
+#OptionSep {
+    background: <bg2>;
+    border: none;
+    max-height: 1px;
+    margin: 0 10px;
+}
+#OptionCheckbox {
+    background: transparent;
+}
+#OptionCheckbox::indicator {
+    width: 16px;
+    height: 16px;
+    border: 1.5px solid <bg2>;
+    border-radius: 3px;
+    background: transparent;
+}
+#OptionCheckbox::indicator:hover {
+    border-color: <accent>;
+}
+#OptionCheckbox::indicator:checked {
+    background: <accent>;
+    border-color: <accent>;
+    image: url("<url_check>");
+}
+
+/* ─── Progress page ─────────────────────────────────────── */
+#ProgressPage { background: <bg>; }
+#ProgressOperation {
+    font-size: 11px;
+    color: <fg1>;
+    background: transparent;
+}
+#InstallProgress {
+    background: <bg2>;
+    border-radius: 3px;
+    border: none;
+    max-height: 6px;
+    min-height: 6px;
+}
+#InstallProgress::chunk {
+    background: <accent>;
+    border-radius: 3px;
+}
+#ProgressPct {
+    font-size: 10px;
+    color: <fg2>;
+    background: transparent;
+}
+#ProgressLog {
+    background: <bg1>;
+    border: 1px solid <bg2>;
+    border-radius: 4px;
+    color: <fg1>;
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 10px;
+    padding: 6px;
+}
+
+/* ─── Finish page ───────────────────────────────────────── */
+#FinishPage { background: <bg>; }
+#FinishCard {
+    background: <bg1>;
+    border: 1px solid <bg2>;
+    border-radius: 6px;
+}
+#FinishTitle {
+    font-size: 18px;
+    font-weight: 600;
+    color: <accent>;
+    background: transparent;
+}
+#FinishDescription {
+    font-size: 12px;
+    color: <fg1>;
+    background: transparent;
+}
+#FinishSep {
+    background: <bg2>;
+    border: none;
+    max-height: 1px;
+}
+#LaunchCheckbox {
+    color: <fg>;
+    font-size: 12px;
+    spacing: 6px;
+    background: transparent;
+}
+#LaunchCheckbox::indicator {
+    width: 16px;
+    height: 16px;
+    border: 1.5px solid <bg2>;
+    border-radius: 3px;
+    background: transparent;
+}
+#LaunchCheckbox::indicator:hover {
+    border-color: <accent>;
+}
+#LaunchCheckbox::indicator:checked {
+    background: <accent>;
+    border-color: <accent>;
+    image: url("<url_check>");
+}
+
+/* ─── QToolTip ──────────────────────────────────────────── */
+QToolTip {
+    background: <bg1>;
+    color: <fg>;
+    border: 1px solid <bg2>;
+    border-radius: 3px;
+    padding: 3px 6px;
+    font-size: 11px;
+}

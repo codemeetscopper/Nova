@@ -6,6 +6,7 @@ from pathlib import Path
 
 from PySide6.QtWidgets import QApplication
 
+from nova.core.paths import get_app_root
 from nova.core.plugin_manager import PluginManager
 from nova.pages.about_page import AboutPage
 from nova.pages.home_page import HomePage
@@ -28,7 +29,7 @@ def _resolve_plugins_dir(config) -> Path:
         raw = "./plugins"
     p = Path(raw)
     if not p.is_absolute():
-        p = Path(__file__).parent.parent / p
+        p = get_app_root() / p
     return p
 
 
@@ -123,7 +124,7 @@ def _do_plugin_hot_reload(ctx, new_path_str: str, old_pm,
 
     new_path = Path(new_path_str)
     if not new_path.is_absolute():
-        new_path = Path(__file__).parent.parent / new_path
+        new_path = get_app_root() / new_path
 
     new_pm = PluginManager(ctx, new_path)
     window._pm = new_pm

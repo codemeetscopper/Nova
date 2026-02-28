@@ -2,11 +2,21 @@ import logging
 import sys
 from pathlib import Path
 
+# ── Worker mode (PyInstaller frozen) ──────────────────────────────
+# When launched as: Nova.exe --worker <plugin_id> <plugins_dir> <socket_name>
+# we skip the GUI and run the plugin worker host directly.
+if "--worker" in sys.argv:
+    idx = sys.argv.index("--worker")
+    sys.argv = [sys.argv[0]] + sys.argv[idx + 1:]
+    from nova.core.worker_host import main as _worker_main
+    _worker_main()
+    sys.exit(0)
+
 import nova.app
 from nova import __version__
 from nova.core.context import NovaContext
 from nova.core.config import ConfigManager
-from nova.core.paths import get_config_path
+from nova.core.paths import get_config_path, get_app_root
 from nova.core.style import StyleManager
 from nova.core.icons import IconManager
 
@@ -18,7 +28,7 @@ logging.basicConfig(
 )
 
 if __name__ == "__main__":
-    root_dir = Path(__file__).parent
+    root_dir = get_app_root()
 
     # Initialize Core Managers
     print("Initializing Nova Core Managers...")
