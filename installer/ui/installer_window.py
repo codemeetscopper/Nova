@@ -195,8 +195,9 @@ class InstallerWindow(QWidget):
         )
         self.setWindowTitle("Installer")
         self.setObjectName("InstallerWindow")
-        self.setMinimumSize(680, 480)
-        self.resize(740, 520)
+        # self.resize(740, 520)
+        self.setMinimumSize(680, 520)
+
 
         # Set window icon (propagates to taskbar)
         self.setWindowIcon(IconManager.get_app_icon())
