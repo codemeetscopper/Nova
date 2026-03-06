@@ -196,6 +196,50 @@ class PluginManager(QObject):
         # Reset crash counter on a fresh manual start
         record.restart_count = 0
 
+        # ── Ensure old process is dead before spawning a new one ──
+        if record.process is not None:
+            old = record.process
+            try:
+                old.finished.disconnect()
+            except RuntimeError:
+                pass
+            if old.state() != QProcess.NotRunning:
+                old.terminate()
+                if not old.waitForFinished(2000):
+                    old.kill()
+                    old.waitForFinished(1000)
+            record.process = None
+
+        # ── Regenerate socket + bridge for a clean start ──
+        if record.bridge:
+            try:
+                record.bridge.data_received.disconnect()
+                record.bridge.worker_ready.disconnect()
+                record.bridge.worker_gone.disconnect()
+            except RuntimeError:
+                pass
+            try:
+                record.bridge.close()
+            except Exception:
+                pass
+            record.bridge.deleteLater()
+
+        record.socket_name = f"nova_{plugin_id}_{uuid.uuid4().hex[:8]}"
+        bridge = MainBridge(record.socket_name, self)
+        bridge.data_received.connect(
+            lambda key, value, pid=plugin_id: self._on_data_received(pid, key, value)
+        )
+        bridge.worker_ready.connect(
+            lambda pid=plugin_id: _log.debug("PluginManager: worker ready for '%s'", pid)
+        )
+        bridge.worker_gone.connect(
+            lambda pid=plugin_id: self._on_bridge_worker_gone(pid)
+        )
+        record.bridge = bridge
+        if record.plugin:
+            record.plugin._bridge = bridge
+
+        # ── Spawn worker process ──
         process = QProcess(self)
         process.setWorkingDirectory(str(self._project_root))
         process.setProcessChannelMode(QProcess.MergedChannels)
@@ -203,11 +247,11 @@ class PluginManager(QObject):
             lambda pid=plugin_id, p=process: self._log_process_output(pid, p)
         )
         process.finished.connect(
-            lambda code, status, pid=plugin_id: self._on_process_finished(pid, code, status)
+            lambda code, status, pid=plugin_id, proc=process:
+                self._on_process_finished(pid, code, status, proc)
         )
 
         if getattr(sys, "frozen", False):
-            # Frozen (PyInstaller): reuse the exe with --worker flag
             args = [
                 "--worker",
                 plugin_id,
@@ -550,17 +594,28 @@ class PluginManager(QObject):
         if record and record.active and plugin_id not in self._intentional_stops:
             _log.warning("PluginManager: worker IPC dropped unexpectedly for '%s'", plugin_id)
 
-    def _on_process_finished(self, plugin_id: str, exit_code: int, exit_status: QProcess.ExitStatus):
+    def _on_process_finished(self, plugin_id: str, exit_code: int,
+                             exit_status: QProcess.ExitStatus,
+                             finished_process: QProcess | None = None):
         # Guard against RuntimeError if self (PluginManager QObject) is being
         # torn down during Python exit while a pending finished signal still fires.
         try:
-            self._handle_process_finished(plugin_id, exit_code, exit_status)
+            self._handle_process_finished(plugin_id, exit_code, exit_status, finished_process)
         except RuntimeError as exc:
             _log.debug("PluginManager: _on_process_finished skipped (teardown): %s", exc)
 
-    def _handle_process_finished(self, plugin_id: str, exit_code: int, exit_status: QProcess.ExitStatus):
+    def _handle_process_finished(self, plugin_id: str, exit_code: int,
+                                 exit_status: QProcess.ExitStatus,
+                                 finished_process: QProcess | None = None):
         record = self._records.get(plugin_id)
         if record is None:
+            return
+
+        # Stale callback from an old process — a new one has been spawned since.
+        # Discard the intentional-stop flag (it belonged to this old cycle) and bail.
+        if finished_process is not None and record.process is not finished_process:
+            self._intentional_stops.discard(plugin_id)
+            _log.debug("PluginManager: ignoring stale process exit for '%s'", plugin_id)
             return
 
         # Consume the intentional-stop flag if present

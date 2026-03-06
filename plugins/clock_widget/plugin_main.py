@@ -57,12 +57,6 @@ class Plugin(PluginBase):
         self._label.setStyleSheet(f"font-size: 72px; font-weight: 200; letter-spacing: 4px; color: {color};")
         v.addWidget(self._label)
 
-        subtitle = QLabel("Live Clock via IPC")
-        subtitle.setObjectName("ClockSubtitle")
-        subtitle.setAlignment(Qt.AlignCenter)
-        subtitle.setStyleSheet("font-size: 12px; opacity: 0.6;")
-        v.addWidget(subtitle)
-
         return frame
 
     def on_data(self, key: str, value) -> None:

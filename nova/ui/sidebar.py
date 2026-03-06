@@ -223,6 +223,7 @@ class Sidebar(QFrame):
     """
 
     item_clicked = Signal(str)
+    minimal_mode_clicked = Signal()
 
     def __init__(self, parent: QWidget | None = None):
         super().__init__(parent)
@@ -280,6 +281,16 @@ class Sidebar(QFrame):
 
         scroll.setWidget(self._nav_container)
         root.addWidget(scroll, 1)
+
+        # ── Bottom: minimal mode button ──────────────────────
+        self._mini_btn = QPushButton()
+        self._mini_btn.setObjectName("SidebarMiniButton")
+        self._mini_btn.setFixedHeight(36)
+        self._mini_btn.setCursor(Qt.PointingHandCursor)
+        self._mini_btn.setToolTip("Switch to minimal mode")
+        self._mini_btn.clicked.connect(self.minimal_mode_clicked)
+        self._refresh_mini_btn()
+        root.addWidget(self._mini_btn)
 
         # ── Animations ───────────────────────────────────────
         self._anim_min = QPropertyAnimation(self, b"minimumWidth")
@@ -353,6 +364,7 @@ class Sidebar(QFrame):
         """Re-render all item icons/text with up-to-date theme colours.
         Call this after StyleManager.initialise() to reflect accent/theme changes."""
         self._set_hamburger_icon()
+        self._refresh_mini_btn()
         for item in self._items.values():
             item.refresh_style()
 
@@ -375,9 +387,21 @@ class Sidebar(QFrame):
         else:
             self._hamburger.setText("☰")
 
+    def _refresh_mini_btn(self):
+        from PySide6.QtCore import QSize as _QS
+        px = _get_icon_pixmap("minimize", _fg1_color(), 16)
+        if px is not None and not px.isNull():
+            self._mini_btn.setIcon(px)
+            self._mini_btn.setIconSize(_QS(16, 16))
+        if self._expanded:
+            self._mini_btn.setText("Minimal Mode")
+        else:
+            self._mini_btn.setText("")
+
     def _expand(self):
         self._expanded = True
         self._logo.setVisible(True)
+        self._mini_btn.setText("Minimal Mode")
         for item in self._items.values():
             item.set_text_visible(True)
         self._animate(self.width(), EXPANDED)
@@ -385,6 +409,7 @@ class Sidebar(QFrame):
     def _collapse(self):
         self._expanded = False
         self._logo.setVisible(False)
+        self._mini_btn.setText("")
         for item in self._items.values():
             item.set_text_visible(False)
         self._animate(self.width(), COLLAPSED)

@@ -113,12 +113,17 @@ def main() -> None:
             _log.warning("Worker: force-quitting (plugin didn't finish in time)")
             QCoreApplication.quit()
 
-    # Schedule the safety net when the bridge receives a stop command.
-    bridge.command_received.connect(
-        lambda cmd, _data: (
-            QTimer.singleShot(5000, _force_quit_if_stopped) if cmd == "stop" else None
-        )
-    )
+    # Dispatch custom commands to the plugin; schedule safety-net for stop.
+    def _on_bridge_command(cmd: str, data: object) -> None:
+        if cmd == "stop":
+            QTimer.singleShot(5000, _force_quit_if_stopped)
+        else:
+            try:
+                plugin.on_command(cmd, data)
+            except Exception as exc:
+                _log.error("plugin.on_command(%r) raised: %s", cmd, exc)
+
+    bridge.command_received.connect(_on_bridge_command)
 
     # ── Qt event loop ──────────────────────────────────────────
     sys.exit(app.exec())

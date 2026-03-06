@@ -113,10 +113,6 @@ class Plugin(PluginBase):
         v.setContentsMargins(margin, margin, margin, margin)
         v.setSpacing(spacing)
 
-        title = QLabel("System Monitor")
-        title.setObjectName("SysMonTitle")
-        v.addWidget(title)
-
         self._cpu_bar = _StatBar("CPU")
         self._mem_bar = _StatBar("Memory")
         self._disk_bar = _StatBar("Disk")

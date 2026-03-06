@@ -43,11 +43,6 @@ class Plugin(PluginBase):
         v.setContentsMargins(24, 24, 24, 24)
         v.setSpacing(12)
 
-        # Title
-        title = QLabel("PDF Merger")
-        title.setObjectName("SysMonTitle")
-        v.addWidget(title)
-
         # Toolbar
         toolbar = QHBoxLayout()
         toolbar.setSpacing(6)

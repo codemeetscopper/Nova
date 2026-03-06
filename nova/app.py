@@ -99,8 +99,9 @@ def _wire_pm_signals(pm, home, window, plugins_pg, settings) -> None:
                 record = pm._records.get(pid)
                 title = record.manifest.name if record else pid
                 icon = record.manifest.icon if record else "extension"
+                desc = record.manifest.description if record else ""
                 window.add_plugin_page(f"plugin_{pid}", title, icon, widget,
-                                       pm.is_favorite(pid))
+                                       pm.is_favorite(pid), description=desc)
         plugins_pg.refresh()
         _update_home()
 
@@ -140,6 +141,7 @@ def _do_plugin_hot_reload(ctx, new_path_str: str, old_pm,
                     f"plugin_{manifest.id}", manifest.name,
                     manifest.icon or "extension", widget,
                     in_sidebar=new_pm.is_favorite(manifest.id),
+                    description=manifest.description,
                 )
             new_pm.start(manifest.id)
     plugins_pg.refresh()
@@ -213,6 +215,7 @@ def run(ctx) -> None:
                     f"plugin_{manifest.id}", manifest.name,
                     manifest.icon or "extension", widget,
                     in_sidebar=pm.is_favorite(manifest.id),
+                    description=manifest.description,
                 )
             # pm.start(manifest.id)
 

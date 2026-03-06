@@ -23,7 +23,8 @@ class _DockToolbar(QWidget):
 
     dock_clicked = Signal()
 
-    def __init__(self, title: str, parent: QWidget | None = None):
+    def __init__(self, title: str, description: str = "",
+                 parent: QWidget | None = None):
         super().__init__(parent)
         self.setObjectName("DetachedToolbar")
         self.setFixedHeight(44)
@@ -31,6 +32,27 @@ class _DockToolbar(QWidget):
         layout = QHBoxLayout(self)
         layout.setContentsMargins(16, 0, 16, 0)
         layout.setSpacing(8)
+
+        # Title + subtitle
+        title_area = QVBoxLayout()
+        title_area.setContentsMargins(0, 4, 0, 4)
+        title_area.setSpacing(1)
+
+        self._title_label = QLabel(title)
+        self._title_label.setObjectName("DetachedTitleLabel")
+        self._title_label.setStyleSheet("font-weight: 600;")
+        title_area.addWidget(self._title_label)
+
+        self._subtitle_label = QLabel(description)
+        self._subtitle_label.setObjectName("DetachedSubtitleLabel")
+        self._subtitle_label.setStyleSheet("color: #888; font-size: 10px;")
+        if not description:
+            self._subtitle_label.hide()
+        title_area.addWidget(self._subtitle_label)
+
+        layout.addLayout(title_area)
+
+        layout.addStretch()
 
         # Status dot
         self._status_dot = QLabel()
@@ -44,8 +66,6 @@ class _DockToolbar(QWidget):
         self._status_label.setObjectName("DetachedStatusLabel")
         self._set_status_label(_COLOR_OFFLINE, "Offline")
         layout.addWidget(self._status_label, 0, Qt.AlignVCenter)
-
-        layout.addStretch()
 
         # Plugin action bar
         self._action_bar = PluginActionBar()
@@ -107,7 +127,8 @@ class DetachedPluginWindow(QWidget):
     dock_requested = Signal(str)   # page_id
 
     def __init__(self, page_id: str, title: str, icon_str: str,
-                 widget: QWidget, parent: QWidget | None = None):
+                 widget: QWidget, parent: QWidget | None = None,
+                 description: str = ""):
         super().__init__(parent, Qt.Window)
         self._page_id = page_id
         self._plugin_widget = widget
@@ -131,7 +152,7 @@ class DetachedPluginWindow(QWidget):
         root.setSpacing(0)
 
         # Toolbar
-        self._toolbar = _DockToolbar(title)
+        self._toolbar = _DockToolbar(title, description)
         self._toolbar.dock_clicked.connect(self._on_dock)
         root.addWidget(self._toolbar)
 

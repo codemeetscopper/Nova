@@ -84,6 +84,14 @@ class PluginBase(ABC):
                 return None
         return None
 
+    def on_command(self, cmd: str, data: Any) -> None:
+        """Called in the WORKER subprocess when the host sends a custom command."""
+
+    def send_command(self, cmd: str, data: Any = None) -> None:
+        """Host side: send a command to the worker subprocess via IPC."""
+        if self._bridge is not None and hasattr(self._bridge, "send_command"):
+            self._bridge.send_command(cmd, data)
+
     def on_theme_changed(self, style_manager) -> None:
         """
         Called in the MAIN process when the application theme/accent changes.

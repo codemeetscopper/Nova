@@ -793,20 +793,6 @@ class Plugin(PluginBase):
         v.setContentsMargins(24, 24, 24, 24)
         v.setSpacing(12)
 
-        # Title
-        title = QLabel("Secure Share")
-        title.setObjectName("SysMonTitle")
-        v.addWidget(title)
-
-        subtitle = QLabel("Encrypted file transfer over LAN")
-        subtitle.setStyleSheet(
-            "font-size: 12px; background: transparent;"
-        )
-        subtitle.setObjectName("ClockSubtitle")
-        v.addWidget(subtitle)
-
-        v.addSpacing(4)
-
         tabs = QTabWidget()
         tabs.setObjectName("SecureShareTabs")
 
