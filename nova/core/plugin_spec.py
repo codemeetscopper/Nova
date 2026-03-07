@@ -25,6 +25,7 @@ NOVA_PLUGIN_SPEC_VERSION = "1.0"
 REQUIRED_FIELDS: List[str] = ["id", "name", "version", "description", "author", "entry"]
 OPTIONAL_FIELDS: List[str] = [
     "icon", "min_nova_version", "permissions", "keywords", "homepage", "spec_version",
+    "category",
 ]
 
 _ID_RE = re.compile(r"^[a-z][a-z0-9_]{0,63}$")
@@ -98,6 +99,7 @@ _MANIFEST_TEMPLATE = {
     "author": "{author}",
     "icon": "extension",
     "entry": "plugin_main.Plugin",
+    "category": "General",
     "min_nova_version": "1.0.0",
     "permissions": ["ipc"],
     "keywords": [],

@@ -185,6 +185,8 @@ class MainWindow(QMainWindow):
         self._mini_bar = MiniBar()
         self._mini_bar.restore_requested.connect(self.exit_minimal_mode)
         self._mini_bar.plugin_clicked.connect(self._on_mini_bar_plugin_click)
+        self._mini_bar.start_all_clicked.connect(self._on_mini_bar_start_all)
+        self._mini_bar.stop_all_clicked.connect(self._on_mini_bar_stop_all)
         self._mini_bar.hide()
 
         central = QWidget()
@@ -414,7 +416,7 @@ class MainWindow(QMainWindow):
             return
 
         widget = dw.take_widget()
-        title = dw.windowTitle().replace(" — Nova", "")
+        title = dw.windowTitle().replace(" (Nova)", "")
 
         self._pages[page_id] = (title, widget)
         self._stack.addWidget(widget)
@@ -530,17 +532,19 @@ class MainWindow(QMainWindow):
     # ── Minimal mode ─────────────────────────────────────────
 
     def enter_minimal_mode(self):
-        """Undock all plugins, hide main window, show mini bar."""
+        """Undock favorited+running plugins, hide main window, show mini bar."""
         if self._minimal_mode:
             return
         self._minimal_mode = True
 
-        # Undock every loaded plugin so they become standalone windows
+        # Undock only plugins that are both favorited AND running
         for page_id in list(self._pages.keys()):
             if page_id.startswith("plugin_"):
-                self.undock_plugin(page_id)
+                pid = page_id[len("plugin_"):]
+                if self._pm and self._pm.is_favorite(pid) and self._pm.is_active(pid):
+                    self.undock_plugin(page_id)
 
-        # Populate mini bar with all known plugins
+        # Populate mini bar with favorited plugins only
         self._sync_mini_bar()
 
         # Position mini bar at top-centre of primary screen
@@ -570,7 +574,7 @@ class MainWindow(QMainWindow):
         _log.debug("Exited minimal mode")
 
     def _sync_mini_bar(self):
-        """Refresh mini bar plugin list from current plugin manager state."""
+        """Refresh mini bar plugin list — only favorited plugins."""
         # Clear existing
         for pid in list(self._mini_bar._plugin_btns.keys()):
             self._mini_bar.remove_plugin(pid)
@@ -578,28 +582,58 @@ class MainWindow(QMainWindow):
         if not self._pm:
             return
         for record in self._pm._records.values():
+            if not self._pm.is_favorite(record.manifest.id):
+                continue
             page_id = f"plugin_{record.manifest.id}"
             icon_str = record.manifest.icon or "extension"
             active = self._pm.is_active(record.manifest.id)
+            has_window = page_id in self._detached
             self._mini_bar.set_plugin(page_id, record.manifest.name,
-                                       icon_str, active)
+                                       icon_str, active,
+                                       has_window=has_window)
 
     def update_mini_bar_status(self, plugin_id: str, active: bool):
         """Called when plugin starts/stops to keep mini bar in sync."""
         page_id = f"plugin_{plugin_id}"
         if self._mini_bar.isVisible():
+            if not self._pm or not self._pm.is_favorite(plugin_id):
+                return
             record = self._pm._records.get(plugin_id) if self._pm else None
             icon_str = record.manifest.icon or "extension" if record else "extension"
             title = record.manifest.name if record else plugin_id
-            self._mini_bar.set_plugin(page_id, title, icon_str, active)
+            has_window = page_id in self._detached
+            self._mini_bar.set_plugin(page_id, title, icon_str, active,
+                                       has_window=has_window)
 
     def _on_mini_bar_plugin_click(self, page_id: str):
-        """Raise the detached window for the clicked plugin."""
+        """Raise the detached window for the clicked plugin, or undock it."""
         if page_id in self._detached:
             dw = self._detached[page_id]
             dw.showNormal()
             dw.activateWindow()
             dw.raise_()
+        elif page_id in self._pages:
+            # Plugin is docked — undock it so it appears as a window
+            self.undock_plugin(page_id)
+            self._sync_mini_bar()
+
+    def _on_mini_bar_start_all(self):
+        """Start all favorited plugins that are not yet running."""
+        if not self._pm:
+            return
+        for record in self._pm._records.values():
+            pid = record.manifest.id
+            if self._pm.is_favorite(pid) and not self._pm.is_active(pid):
+                self._pm.start(pid)
+
+    def _on_mini_bar_stop_all(self):
+        """Stop all favorited plugins that are currently running."""
+        if not self._pm:
+            return
+        for record in self._pm._records.values():
+            pid = record.manifest.id
+            if self._pm.is_favorite(pid) and self._pm.is_active(pid):
+                self._pm.stop(pid)
 
     # ── System tray ──────────────────────────────────────────
 

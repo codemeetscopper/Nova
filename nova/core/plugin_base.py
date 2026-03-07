@@ -21,6 +21,7 @@ class PluginManifest:
     entry: str = "plugin_main.Plugin"
     thread_isolated: bool = True
     min_nova_version: str = ""
+    category: str = "General"
 
     @classmethod
     def from_file(cls, path: Path) -> "PluginManifest":
@@ -35,6 +36,7 @@ class PluginManifest:
             entry=data.get("entry", "plugin_main.Plugin"),
             thread_isolated=data.get("thread_isolated", True),
             min_nova_version=data.get("min_nova_version", ""),
+            category=data.get("category", "General"),
         )
 
 

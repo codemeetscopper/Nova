@@ -6,8 +6,8 @@ from typing import Dict, List, Optional, Tuple
 
 from PySide6.QtCore import QSize, Qt, Signal
 from PySide6.QtWidgets import (
-    QCheckBox, QDialog, QDialogButtonBox, QFileDialog, QFormLayout,
-    QFrame, QGridLayout, QHBoxLayout, QLabel, QLineEdit,
+    QCheckBox, QComboBox, QDialog, QDialogButtonBox, QFileDialog,
+    QFormLayout, QFrame, QHBoxLayout, QLabel, QLineEdit,
     QMessageBox, QPushButton, QScrollArea, QSizePolicy,
     QVBoxLayout, QWidget,
 )
@@ -178,6 +178,7 @@ class _InfoDialog(QDialog):
         row("ID", manifest.id); row("Name", manifest.name)
         row("Version", manifest.version); row("Author", manifest.author)
         row("Description", manifest.description)
+        row("Category", manifest.category)
         sep = QFrame(); sep.setFrameShape(QFrame.HLine); layout.addWidget(sep)
         row("Enabled", "Yes" if state.enabled else "No")
         row("Favorite", "Yes" if state.favorite else "No")
@@ -190,10 +191,12 @@ class _InfoDialog(QDialog):
 
 
 # ─────────────────────────────────────────────────────────────
-#  Plugin Card
+#  Plugin List Item (replaces PluginCard)
 # ─────────────────────────────────────────────────────────────
 
-class PluginCard(QFrame):
+class PluginListItem(QFrame):
+    """A single row in the plugin list — compact horizontal layout."""
+
     start_clicked    = Signal(str)
     stop_clicked     = Signal(str)
     view_clicked     = Signal(str)
@@ -211,63 +214,71 @@ class PluginCard(QFrame):
         self._is_favorite = plugin_manager.is_favorite(manifest.id)
         self._icon_str = manifest.icon or ""
 
-        self.setObjectName("PluginCard")
+        self.setObjectName("PluginListItem")
         self.setFrameShape(QFrame.NoFrame)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.setFixedHeight(56)
 
-        v = QVBoxLayout(self)
-        v.setContentsMargins(12, 8, 12, 10)
-        v.setSpacing(4)
+        h = QHBoxLayout(self)
+        h.setContentsMargins(12, 6, 12, 6)
+        h.setSpacing(8)
 
-        # ── Row 1: icon + name + status + version + checkbox (right) ──
-        header = QHBoxLayout()
-        header.setSpacing(6)
-
-        self._icon_lbl = QLabel()
-        self._icon_lbl.setFixedSize(18, 18)
-        self._icon_lbl.setAlignment(Qt.AlignCenter)
-        self._icon_lbl.setStyleSheet("background: transparent;")
-
-        name_lbl = QLabel(manifest.name)
-        name_lbl.setObjectName("PluginCardName")
-
-        self._status_lbl = QLabel("Offline")
-        self._status_lbl.setObjectName("PluginStatusLabel")
-
-        ver_lbl = QLabel(f"v{manifest.version}")
-        ver_lbl.setObjectName("PluginCardVersion")
-
+        # Checkbox
         self._checkbox = QCheckBox()
         self._checkbox.setToolTip("Select for bulk actions")
+        self._checkbox.setFixedSize(20, 20)
         self._checkbox.toggled.connect(
             lambda checked: self.selection_changed.emit(manifest.id, checked)
         )
+        h.addWidget(self._checkbox)
 
-        header.addWidget(self._icon_lbl)
-        header.addWidget(name_lbl, 1)
-        header.addWidget(self._status_lbl)
-        header.addWidget(ver_lbl)
-        header.addWidget(self._checkbox)
-        v.addLayout(header)
+        # Plugin icon
+        self._icon_lbl = QLabel()
+        self._icon_lbl.setFixedSize(22, 22)
+        self._icon_lbl.setAlignment(Qt.AlignCenter)
+        self._icon_lbl.setStyleSheet("background: transparent;")
+        h.addWidget(self._icon_lbl)
 
-        # ── Description ──────────────────────────────────────
-        desc = QLabel(manifest.description or "No description provided.")
-        desc.setObjectName("PluginCardDesc")
-        desc.setWordWrap(True)
-        v.addWidget(desc)
+        # Name + description column
+        info_col = QVBoxLayout()
+        info_col.setContentsMargins(0, 0, 0, 0)
+        info_col.setSpacing(1)
 
+        self._name_lbl = QLabel(manifest.name)
+        self._name_lbl.setObjectName("PluginListName")
+        info_col.addWidget(self._name_lbl)
+
+        desc_text = manifest.description or "No description"
         if manifest.author:
-            author = QLabel(f"By {manifest.author}")
-            author.setObjectName("PluginCardAuthor")
-            v.addWidget(author)
+            desc_text += f"  ·  {manifest.author}"
+        self._desc_lbl = QLabel(desc_text)
+        self._desc_lbl.setObjectName("PluginListDesc")
+        self._desc_lbl.setWordWrap(False)
+        info_col.addWidget(self._desc_lbl)
 
-        v.addStretch()
+        h.addLayout(info_col, 1)
 
-        # ── Bottom bar: all flat icon buttons ────────────────
-        bottom = QHBoxLayout()
-        bottom.setContentsMargins(0, 2, 0, 0)
-        bottom.setSpacing(2)
+        # Category badge
+        self._cat_lbl = QLabel(manifest.category)
+        self._cat_lbl.setObjectName("PluginListCategory")
+        self._cat_lbl.setAlignment(Qt.AlignCenter)
+        h.addWidget(self._cat_lbl)
 
+        # Status label
+        self._status_lbl = QLabel("Offline")
+        self._status_lbl.setObjectName("PluginStatusLabel")
+        self._status_lbl.setFixedWidth(55)
+        self._status_lbl.setAlignment(Qt.AlignCenter)
+        h.addWidget(self._status_lbl)
+
+        # Version
+        ver_lbl = QLabel(f"v{manifest.version}")
+        ver_lbl.setObjectName("PluginListVersion")
+        ver_lbl.setFixedWidth(40)
+        ver_lbl.setAlignment(Qt.AlignCenter)
+        h.addWidget(ver_lbl)
+
+        # ── Action buttons ──────────────────────────────────
         self._play_btn = _icon_btn("play", "Start plugin")
         self._play_btn.clicked.connect(lambda: self.start_clicked.emit(manifest.id))
 
@@ -307,22 +318,28 @@ class PluginCard(QFrame):
             (self._delete_btn, "delete"),
         ]
 
-        bottom.addWidget(self._play_btn)
-        bottom.addWidget(self._stop_btn)
-        bottom.addWidget(self._view_btn)
-        bottom.addWidget(self._reload_btn)
-        bottom.addWidget(self._fav_btn)
-        bottom.addStretch()
-        bottom.addWidget(self._info_btn)
-        bottom.addWidget(self._export_btn)
-        bottom.addWidget(self._delete_btn)
-        v.addLayout(bottom)
+        h.addWidget(self._play_btn)
+        h.addWidget(self._stop_btn)
+        h.addWidget(self._view_btn)
+        h.addWidget(self._reload_btn)
+        h.addWidget(self._fav_btn)
+        h.addWidget(self._info_btn)
+        h.addWidget(self._export_btn)
+        h.addWidget(self._delete_btn)
 
         # Initial state
         self._apply_status("Offline", _fg2_color())
         self._update_fav_icon()
 
     # ── Public API ────────────────────────────────────────────
+
+    @property
+    def manifest_id(self) -> str:
+        return self._manifest.id
+
+    @property
+    def category(self) -> str:
+        return self._manifest.category
 
     def set_active(self, active: bool):
         self._play_btn.setEnabled(not active)
@@ -354,15 +371,40 @@ class PluginCard(QFrame):
         for btn, name in self._icon_btns:
             _refresh_icon(btn, name, _BTN)
         self._update_fav_icon()
+        # Re-render plugin icon
+        color = _fg2_color()
+        status_text = self._status_lbl.text()
+        if status_text == "Online":
+            color = _COLOR_RUNNING
+        elif status_text == "Crashed":
+            color = _COLOR_CRASHED
+        self._set_plugin_icon(color)
+
+    def matches_filter(self, search: str, category: str) -> bool:
+        """Return True if this item matches the current filter criteria."""
+        if category and category != "All" and self._manifest.category != category:
+            return False
+        if search:
+            s = search.lower()
+            if (s not in self._manifest.name.lower()
+                    and s not in self._manifest.id.lower()
+                    and s not in (self._manifest.description or "").lower()
+                    and s not in (self._manifest.author or "").lower()
+                    and s not in self._manifest.category.lower()):
+                return False
+        return True
 
     # ── Internal ──────────────────────────────────────────────
 
-    def _apply_status(self, text: str, color: str) -> None:
-        px = _render_plugin_icon(self._icon_str, color, 18)
+    def _set_plugin_icon(self, color: str):
+        px = _render_plugin_icon(self._icon_str, color, 20)
         if px and not px.isNull():
             self._icon_lbl.setPixmap(px)
         else:
             self._icon_lbl.setText("?")
+
+    def _apply_status(self, text: str, color: str) -> None:
+        self._set_plugin_icon(color)
         self._status_lbl.setText(text)
         weight = "600" if text != "Offline" else "400"
         self._status_lbl.setStyleSheet(
@@ -380,6 +422,10 @@ class PluginCard(QFrame):
         _refresh_icon(self._fav_btn, icon, _BTN, color)
 
 
+# Keep backward-compat alias for main_window.py imports
+PluginCard = PluginListItem
+
+
 # ─────────────────────────────────────────────────────────────
 #  Plugins Page
 # ─────────────────────────────────────────────────────────────
@@ -390,7 +436,7 @@ class PluginsPage(QWidget):
     def __init__(self, plugin_manager, parent: QWidget | None = None):
         super().__init__(parent)
         self._pm = plugin_manager
-        self._cards: Dict[str, PluginCard] = {}
+        self._cards: Dict[str, PluginListItem] = {}
         self.setObjectName("PluginsPage")
 
         self._pm.plugin_started.connect(self._on_plugin_started)
@@ -408,7 +454,29 @@ class PluginsPage(QWidget):
         self._container.setObjectName("PluginsContainer")
         self._root = QVBoxLayout(self._container)
         self._root.setContentsMargins(20, 16, 20, 20)
-        self._root.setSpacing(12)
+        self._root.setSpacing(8)
+
+        # ── Search / filter bar ────────────────────────────────
+        filter_bar = QHBoxLayout()
+        filter_bar.setSpacing(8)
+
+        self._search = QLineEdit()
+        self._search.setObjectName("PluginSearchBox")
+        self._search.setPlaceholderText("Search plugins...")
+        self._search.setClearButtonEnabled(True)
+        self._search.setFixedHeight(28)
+        self._search.textChanged.connect(self._apply_filter)
+        filter_bar.addWidget(self._search, 1)
+
+        self._category_filter = QComboBox()
+        self._category_filter.setObjectName("PluginCategoryFilter")
+        self._category_filter.setFixedHeight(28)
+        self._category_filter.setMinimumWidth(120)
+        self._category_filter.addItem("All")
+        self._category_filter.currentTextChanged.connect(self._apply_filter)
+        filter_bar.addWidget(self._category_filter)
+
+        self._root.addLayout(filter_bar)
 
         # ── Toolbar: batch actions (left) | management (right) ──
         toolbar = QHBoxLayout()
@@ -440,10 +508,15 @@ class PluginsPage(QWidget):
 
         self._root.addLayout(toolbar)
 
-        self._grid_widget = QWidget()
-        self._grid = QGridLayout(self._grid_widget)
-        self._grid.setSpacing(10)
-        self._root.addWidget(self._grid_widget)
+        # ── List container ──────────────────────────────────────
+        self._list_widget = QWidget()
+        self._list_widget.setObjectName("PluginListContainer")
+        self._list_layout = QVBoxLayout(self._list_widget)
+        self._list_layout.setContentsMargins(0, 0, 0, 0)
+        self._list_layout.setSpacing(2)
+        self._list_layout.addStretch()
+
+        self._root.addWidget(self._list_widget)
         self._root.addStretch()
 
         scroll.setWidget(self._container)
@@ -464,16 +537,20 @@ class PluginsPage(QWidget):
         self.refresh()
 
     def refresh(self):
-        while self._grid.count():
-            item = self._grid.takeAt(0)
+        # Remove all items
+        while self._list_layout.count() > 1:  # keep the trailing stretch
+            item = self._list_layout.takeAt(0)
             w = item.widget()
             if w:
                 w.setParent(None)
                 w.deleteLater()
         self._cards.clear()
-        for idx, manifest in enumerate(self._pm.manifests()):
-            self._add_card(manifest, idx)
+
+        for manifest in self._pm.manifests():
+            self._add_item(manifest)
         self._update_selection_buttons()
+        self._rebuild_category_filter()
+        self._apply_filter()
 
     def refresh_icons(self) -> None:
         for card in self._cards.values():
@@ -481,25 +558,48 @@ class PluginsPage(QWidget):
 
     def add_plugin_card(self, manifest):
         if manifest.id not in self._cards:
-            self._add_card(manifest, len(self._cards))
+            self._add_item(manifest)
+            self._rebuild_category_filter()
 
-    # ── Internal — card lifecycle ─────────────────────────────
+    # ── Internal — item lifecycle ────────────────────────────
 
-    def _add_card(self, manifest, idx: int):
-        card = PluginCard(manifest, self._pm)
-        card.start_clicked.connect(self._on_start_clicked)
-        card.stop_clicked.connect(self._on_stop_clicked)
-        card.view_clicked.connect(self.navigate_to_plugin)
-        card.favorite_toggled.connect(self._pm.set_favorite)
-        card.reload_clicked.connect(self._on_reload_clicked)
-        card.export_clicked.connect(self._on_export_clicked)
-        card.delete_clicked.connect(self._on_delete_clicked)
-        card.info_clicked.connect(self._on_info_clicked)
-        card.selection_changed.connect(self._on_card_selection_changed)
-        card.set_active(self._pm.is_active(manifest.id))
-        row, col = divmod(idx, 2)
-        self._grid.addWidget(card, row, col)
-        self._cards[manifest.id] = card
+    def _add_item(self, manifest):
+        item = PluginListItem(manifest, self._pm)
+        item.start_clicked.connect(self._on_start_clicked)
+        item.stop_clicked.connect(self._on_stop_clicked)
+        item.view_clicked.connect(self.navigate_to_plugin)
+        item.favorite_toggled.connect(self._pm.set_favorite)
+        item.reload_clicked.connect(self._on_reload_clicked)
+        item.export_clicked.connect(self._on_export_clicked)
+        item.delete_clicked.connect(self._on_delete_clicked)
+        item.info_clicked.connect(self._on_info_clicked)
+        item.selection_changed.connect(self._on_card_selection_changed)
+        item.set_active(self._pm.is_active(manifest.id))
+        # Insert before trailing stretch
+        self._list_layout.insertWidget(self._list_layout.count() - 1, item)
+        self._cards[manifest.id] = item
+
+    def _rebuild_category_filter(self):
+        """Update the category filter dropdown from current plugins."""
+        current = self._category_filter.currentText()
+        categories = sorted({item.category for item in self._cards.values()})
+        self._category_filter.blockSignals(True)
+        self._category_filter.clear()
+        self._category_filter.addItem("All")
+        for cat in categories:
+            self._category_filter.addItem(cat)
+        # Restore selection
+        idx = self._category_filter.findText(current)
+        if idx >= 0:
+            self._category_filter.setCurrentIndex(idx)
+        self._category_filter.blockSignals(False)
+
+    def _apply_filter(self, _=None):
+        """Show/hide items based on search text and category."""
+        search = self._search.text().strip()
+        category = self._category_filter.currentText()
+        for item in self._cards.values():
+            item.setVisible(item.matches_filter(search, category))
 
     # ── Internal — selection & bulk actions ──────────────────
 
@@ -507,7 +607,8 @@ class PluginsPage(QWidget):
         return [pid for pid, card in self._cards.items() if card.is_selected]
 
     def _all_selected(self) -> bool:
-        return bool(self._cards) and all(c.is_selected for c in self._cards.values())
+        visible = [c for c in self._cards.values() if c.isVisible()]
+        return bool(visible) and all(c.is_selected for c in visible)
 
     def _update_selection_buttons(self):
         has_sel = any(c.is_selected for c in self._cards.values())
@@ -526,7 +627,8 @@ class PluginsPage(QWidget):
     def _on_select_all(self):
         target = not self._all_selected()
         for card in self._cards.values():
-            card.set_selected(target)
+            if card.isVisible():
+                card.set_selected(target)
 
     def _on_start_selected(self):
         for pid in self._selected_ids():

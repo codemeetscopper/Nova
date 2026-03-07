@@ -134,16 +134,22 @@ class DetachedPluginWindow(QWidget):
         self._plugin_widget = widget
         self._is_active = False
 
-        self.setWindowTitle(f"{title} — Nova")
+        self.setWindowTitle(f"{title} (Nova)")
         self.setObjectName("DetachedPluginWindow")
         self.setMinimumSize(420, 320)
         self.resize(640, 480)
         self.setAttribute(Qt.WA_DeleteOnClose, False)
 
-        # Window icon
+        # Window icon — use the plugin's own icon
         accent = StyleManager.get_colour("accent")
-        icon_px = IconManager.get_pixmap("logo", accent, 25)
-        if icon_px:
+        icon_px = None
+        if icon_str and icon_str.strip().startswith("<"):
+            icon_px = IconManager.render_svg_string(icon_str, accent, 25)
+        elif icon_str:
+            icon_px = IconManager.get_pixmap(icon_str, accent, 25)
+        if not icon_px or icon_px.isNull():
+            icon_px = IconManager.get_pixmap("logo", accent, 25)
+        if icon_px and not icon_px.isNull():
             from PySide6.QtGui import QIcon
             self.setWindowIcon(QIcon(icon_px))
 

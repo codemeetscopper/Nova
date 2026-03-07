@@ -389,19 +389,19 @@ class Sidebar(QFrame):
 
     def _refresh_mini_btn(self):
         from PySide6.QtCore import QSize as _QS
-        px = _get_icon_pixmap("minimize", _fg1_color(), 16)
+        px = _get_icon_pixmap("picture_in_picture", _fg1_color(), 16)
         if px is not None and not px.isNull():
             self._mini_btn.setIcon(px)
             self._mini_btn.setIconSize(_QS(16, 16))
         if self._expanded:
-            self._mini_btn.setText("Minimal Mode")
+            self._mini_btn.setText("Minimize Nova")
         else:
             self._mini_btn.setText("")
 
     def _expand(self):
         self._expanded = True
         self._logo.setVisible(True)
-        self._mini_btn.setText("Minimal Mode")
+        self._mini_btn.setText("Minimize Nova")
         for item in self._items.values():
             item.set_text_visible(True)
         self._animate(self.width(), EXPANDED)
