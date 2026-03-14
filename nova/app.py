@@ -62,6 +62,22 @@ def _wire_pm_signals(pm, home, window, plugins_pg, settings) -> None:
     pm.plugin_imported.connect(_update_home)
     _update_home()
 
+    # Activity feed on home dashboard
+    def _name(pid):
+        r = pm._records.get(pid)
+        return r.manifest.name if r else pid
+
+    pm.plugin_started.connect(
+        lambda pid: home.log_activity(f"{_name(pid)} started", "#22C55E"))
+    pm.plugin_stopped.connect(
+        lambda pid: home.log_activity(f"{_name(pid)} stopped", "#888888"))
+    pm.plugin_crashed.connect(
+        lambda pid, msg: home.log_activity(f"{_name(pid)} crashed", "#EF4444"))
+    pm.plugin_imported.connect(
+        lambda pid: home.log_activity(f"{_name(pid)} imported", "#3B82F6"))
+    pm.plugin_deleted.connect(
+        lambda pid: home.log_activity(f"{pid} removed", "#F59E0B"))
+
     # Update header status + action bar when plugin state changes
     pm.plugin_started.connect(lambda pid: window.update_plugin_status(pid, True))
     pm.plugin_stopped.connect(lambda pid: window.update_plugin_status(pid, False))
@@ -76,6 +92,9 @@ def _wire_pm_signals(pm, home, window, plugins_pg, settings) -> None:
             window.navigate(page_id)
 
     plugins_pg.navigate_to_plugin.connect(_on_navigate)
+
+    # Home page card clicks → navigate
+    home.navigate_to.connect(lambda page_id: window.navigate(page_id))
 
     def _on_favorite_changed(pid: str, is_fav: bool):
         page_id = f"plugin_{pid}"
@@ -129,6 +148,7 @@ def _do_plugin_hot_reload(ctx, new_path_str: str, old_pm,
 
     new_pm = PluginManager(ctx, new_path)
     window._pm = new_pm
+    home.set_plugin_manager(new_pm)
     plugins_pg.update_plugin_manager(new_pm)
     settings.update_plugin_manager(new_pm)
     _wire_pm_signals(new_pm, home, window, plugins_pg, settings)
@@ -193,6 +213,7 @@ def run(ctx) -> None:
     pm = PluginManager(ctx, plugins_dir)
 
     home      = HomePage(ctx)
+    home.set_plugin_manager(pm)
     plugins_pg = PluginsPage(pm)
     settings  = SettingsPage(ctx, pm)
     log_pg    = LogPage(ctx)
@@ -226,8 +247,10 @@ def run(ctx) -> None:
     def _on_style_changed():
         window._sidebar.refresh_colors()
         window._header.refresh_icons()
+        window._custom_titlebar.refresh_theme()
         window.refresh_detached_themes()
         plugins_pg.refresh_icons()
+        home.refresh_icons()
         _cascade_theme_to_plugins(pm, ctx)
 
     settings.style_changed.connect(_on_style_changed)

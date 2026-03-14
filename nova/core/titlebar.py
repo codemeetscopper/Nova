@@ -233,8 +233,7 @@ class TitleBarWidget(QWidget):
         if show_icon:
             self._icon_label = QLabel()
             self._icon_label.setObjectName("titlebar_icon")
-            accent = StyleManager.get_colour("accent")
-            pm = IconManager.get_pixmap("logo", accent, 18)
+            pm = IconManager.get_pixmap("logo", "#FFFFFF", 18)
             if pm:
                 self._icon_label.setPixmap(pm)
             self._icon_label.setFixedSize(34, height)
@@ -243,15 +242,11 @@ class TitleBarWidget(QWidget):
         else:
             self._icon_label = None
 
-        # Title label
-        fg = StyleManager.get_colour("fg")
+        # Title label — color controlled by QSS (#titlebar_title)
         if title:
             self._title_label = QLabel(title)
             self._title_label.setObjectName("titlebar_title")
             self._title_label.setAlignment(Qt.AlignVCenter | Qt.AlignLeft)
-            self._title_label.setStyleSheet(
-                f"color: {fg}; font-size: 11px; padding-left: 4px;"
-            )
             lay.addWidget(self._title_label)
         else:
             self._title_label = None
@@ -293,6 +288,13 @@ class TitleBarWidget(QWidget):
 
     def update_maximize_icon(self, maximized: bool):
         self._maximize_btn.setText("\uE923" if maximized else "\uE922")
+
+    def refresh_theme(self):
+        """Re-render the app icon pixmap after a theme/accent change."""
+        if self._icon_label is not None:
+            pm = IconManager.get_pixmap("logo", "#FFFFFF", 18)
+            if pm:
+                self._icon_label.setPixmap(pm)
 
 
 # ---------------------------------------------------------------------------

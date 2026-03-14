@@ -41,11 +41,16 @@ QMainWindow, #NovaMainWindow { background-color: <bg>; }
 
 /* ─── Custom titlebar ────────────────────────────────────── */
 #custom_titlebar {
-    background-color: <bg1>;
-    border-bottom: 1px solid <bg2>;
+    background-color: <accent>;
+    border: none;
 }
 #titlebar_icon { background: transparent; }
-#titlebar_title { background: transparent; }
+#titlebar_title {
+    background: transparent;
+    color: white;
+    font-size: 11px;
+    padding-left: 4px;
+}
 #minimizebtn, #maximizebtn, #closebtn {
     background: transparent;
     border: none;
@@ -57,9 +62,9 @@ QMainWindow, #NovaMainWindow { background-color: <bg>; }
     padding: 0;
     font-family: "Segoe MDL2 Assets";
     font-size: 10px;
-    color: <fg>;
+    color: white;
 }
-#minimizebtn:hover, #maximizebtn:hover { background: <bg2>; }
+#minimizebtn:hover, #maximizebtn:hover { background: <accent_d1>; }
 #closebtn:hover { background: #E81123; color: white; }
 
 /* ─── Sidebar ────────────────────────────────────────────── */
@@ -155,15 +160,125 @@ QMainWindow, #NovaMainWindow { background-color: <bg>; }
 }
 
 /* ─── Home page ──────────────────────────────────────────── */
-#HomePage, #HomeContainer { background: <bg>; }
-#HomeGreeting { font-size: 22px; font-weight: 300; color: <fg>; }
-#HomeSubtitle { font-size: 12px; color: <fg2>; }
-#HomeDescription { font-size: 12px; color: <fg1>; }
+#HomePage { background: <bg>; }
+#HomeScroll { background: transparent; border: none; }
+#HomeContainer { background: transparent; }
+#HomeHero, #HomeBottomRow { background: transparent; }
+#HomeGreeting {
+    font-size: 24px;
+    font-weight: 300;
+    color: <fg>;
+    background: transparent;
+}
+#HomeSubtitle {
+    font-size: 12px;
+    color: <fg2>;
+    background: transparent;
+}
 
+/* Dashboard section labels */
+#DashSectionLabel {
+    font-size: 10px;
+    font-weight: 700;
+    color: <fg2>;
+    letter-spacing: 1.5px;
+    background: transparent;
+    padding: 0;
+}
+
+/* ─── Dashboard panels ──────────────────────────────────── */
+#DashPanel {
+    background: <bg1>;
+    border: 1px solid <bg2>;
+    border-radius: 10px;
+}
+#DashPanelSep {
+    background: <bg2>;
+    border: none;
+}
+
+/* ─── Stat mini (plugin overview card) ──────────────────── */
+#StatMini {
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+}
+#StatMini:hover { background: <accent_ln>; }
+#StatMiniIcon { background: transparent; }
+#StatMiniValue {
+    font-size: 22px;
+    font-weight: 700;
+    color: <accent>;
+    background: transparent;
+}
+#StatMiniTitle {
+    font-size: 9px;
+    font-weight: 700;
+    color: <fg2>;
+    letter-spacing: 1px;
+    background: transparent;
+}
+
+/* ─── Quick action pills ────────────────────────────────── */
+#QuickAction {
+    background: transparent;
+    border: 1px solid <bg2>;
+    border-radius: 8px;
+}
+#QuickAction:hover {
+    background: <accent_ln>;
+    border-color: <accent_l2>;
+}
+#QuickActionIcon { background: transparent; }
+#QuickActionText {
+    font-size: 12px;
+    font-weight: 500;
+    color: <fg>;
+    background: transparent;
+}
+#QuickActionArrow {
+    font-size: 16px;
+    color: <fg2>;
+    background: transparent;
+}
+
+/* ─── Info rows ─────────────────────────────────────────── */
+#HomeInfoRow { background: transparent; }
+#HomeInfoKey {
+    font-size: 12px;
+    font-weight: 500;
+    color: <fg2>;
+    background: transparent;
+}
+#HomeInfoValue {
+    font-size: 12px;
+    font-weight: 600;
+    color: <fg>;
+    background: transparent;
+}
+
+/* ─── Activity items ────────────────────────────────────── */
+#ActivityItem { background: transparent; }
+#ActivityText {
+    font-size: 11px;
+    color: <fg1>;
+    background: transparent;
+}
+#ActivityTime {
+    font-size: 10px;
+    color: <fg2>;
+    background: transparent;
+}
+#ActivityDot { border: none; }
+
+/* Legacy stat cards (keep for compat) */
 #StatCard {
     background: <bg1>;
     border: 1px solid <bg2>;
     border-radius: 10px;
+}
+#StatCard:hover {
+    border: 1px solid <accent_l2>;
 }
 #StatValue {
     font-size: 28px;
@@ -590,35 +705,119 @@ QProgressBar::chunk {
 }
 #PdfMergerMerge:hover { background: <accent_d1>; }
 
-/* ─── Secure Share ──────────────────────────────────────── */
-#SecureShareTabs { background: <bg>; }
-#ServerToggle {
+/* ─── Secure Share (two-panel layout) ──────────────────── */
+#SSContent, #SSPanels { background: transparent; }
+#SSPanel {
+    background: <bg1>;
+    border: 1px solid <bg2>;
+    border-radius: 10px;
+}
+#SSSectionHeader { background: transparent; }
+#SSSectionTitle {
+    font-size: 14px;
+    font-weight: 600;
+    color: <fg>;
+    background: transparent;
+}
+#SSSep {
+    background: <bg2>;
+    border: none;
+}
+#SSStatusLabel {
+    font-size: 11px;
+    font-weight: 500;
+    color: <fg2>;
+    background: transparent;
+}
+#SSInputRow { background: transparent; }
+#SSInputLabel {
+    font-size: 12px;
+    font-weight: 500;
+    color: <fg2>;
+    background: transparent;
+}
+#SSFolderPath {
+    font-size: 12px;
+    color: <fg1>;
+    background: transparent;
+}
+#SSSubLabel {
+    font-size: 12px;
+    font-weight: 600;
+    color: <fg1>;
+    background: transparent;
+}
+#SSFileInfo {
+    font-size: 11px;
+    color: <fg2>;
+    background: transparent;
+    padding-left: 90px;
+}
+#SSTransferStatus {
+    font-size: 11px;
+    color: <fg1>;
+    background: transparent;
+}
+#SSPrimaryBtn {
     background: <accent>;
     color: white;
     border: none;
-    border-radius: 5px;
-    padding: 6px 18px;
+    border-radius: 6px;
+    padding: 8px 20px;
+    font-size: 13px;
     font-weight: 600;
-    min-height: 30px;
+    min-height: 34px;
+    max-height: 34px;
 }
-#ServerToggle:hover { background: <accent_d1>; }
-#ServerToggle[running="true"] {
-    background: #EF4444;
+#SSPrimaryBtn:hover { background: <accent_d1>; }
+#SSPrimaryBtn:disabled { background: <bg2>; color: <fg2>; }
+#SSPrimaryBtn[running="true"] { background: #EF4444; }
+#SSPrimaryBtn[running="true"]:hover { background: #DC2626; }
+#SSSmallBtn {
+    background: <accent_ln>;
+    color: <accent>;
+    border: 1px solid <accent_l2>;
+    border-radius: 5px;
+    padding: 4px 12px;
+    font-size: 11px;
+    font-weight: 500;
+    min-height: 26px;
+    max-height: 26px;
+    min-width: 60px;
 }
-#ServerToggle[running="true"]:hover {
-    background: #DC2626;
+#SSSmallBtn:hover { background: <accent_l3>; border-color: <accent>; }
+#SSLogPanel {
+    background: <bg>;
+    border: 1px solid <bg2>;
+    border-radius: 8px;
 }
-#SendButton {
-    background: <accent>;
-    color: white;
+#SSLogList {
+    background: transparent;
     border: none;
-    border-radius: 5px;
-    padding: 6px 18px;
-    font-weight: 600;
-    min-height: 30px;
-    min-width: 90px;
+    border-radius: 0;
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 11px;
+    color: <fg1>;
 }
-#SendButton:hover { background: <accent_d1>; }
+#SSLogList::item { padding: 2px 6px; border-radius: 0; }
+#SSServerList {
+    background: <bg>;
+    border: 1px solid <bg2>;
+    border-radius: 6px;
+    font-size: 12px;
+}
+#SSServerList::item { padding: 4px 8px; }
+#SSProgress {
+    background: <bg2>;
+    border: none;
+    border-radius: 4px;
+    max-height: 6px;
+    min-height: 6px;
+}
+#SSProgress::chunk {
+    background: <accent>;
+    border-radius: 4px;
+}
 
 /* ─── Log page ───────────────────────────────────────────── */
 #LogPage { background: <bg>; }
