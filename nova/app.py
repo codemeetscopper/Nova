@@ -241,6 +241,16 @@ def run(ctx) -> None:
 
     window.navigate("home")
     window.resize(1280, 780)
+
+    # Centre window on screen
+    from PySide6.QtGui import QGuiApplication as _QGA
+    screen = _QGA.primaryScreen()
+    if screen:
+        avail = screen.availableGeometry()
+        x = avail.x() + (avail.width() - window.width()) // 2
+        y = avail.y() + (avail.height() - window.height()) // 2
+        window.move(x, y)
+
     window.show()
 
     sys.exit(app.exec())

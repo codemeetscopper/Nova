@@ -10,8 +10,10 @@ from PySide6.QtWidgets import (
     QSizePolicy, QStackedWidget, QSystemTrayIcon, QVBoxLayout, QWidget,
 )
 
+from nova.core.customgrip import CustomGrip
 from nova.core.icons import IconManager
 from nova.core.style import StyleManager
+from nova.core.titlebar import FramelessMixin, TitleBarWidget
 from nova.ui.detached_window import DetachedPluginWindow
 from nova.ui.mini_bar import MiniBar
 from nova.ui.plugin_action_bar import PluginActionBar
@@ -130,10 +132,10 @@ class PageHeader(QWidget):
             self._undock_btn.setText("⇱")
 
 
-class MainWindow(QMainWindow):
+class MainWindow(FramelessMixin, QMainWindow):
     """
-    Nova main window.
-    Layout:  Sidebar | (PageHeader / QStackedWidget)
+    Nova main window — frameless with custom titlebar.
+    Layout:  TitleBar / (Sidebar | (PageHeader / QStackedWidget))
     """
 
     plugin_undocked = Signal(str)  # page_id
@@ -193,7 +195,18 @@ class MainWindow(QMainWindow):
         central.setObjectName("CentralWidget")
         self.setCentralWidget(central)
 
-        h_layout = QHBoxLayout(central)
+        main_v = QVBoxLayout(central)
+        main_v.setContentsMargins(0, 0, 0, 0)
+        main_v.setSpacing(0)
+
+        # ── Custom titlebar ──────────────────────────────────
+        self._custom_titlebar = TitleBarWidget(self, title="Nova", height=36)
+        main_v.addWidget(self._custom_titlebar)
+
+        # ── Body: sidebar + content ──────────────────────────
+        body = QWidget()
+        body.setObjectName("BodyWidget")
+        h_layout = QHBoxLayout(body)
         h_layout.setContentsMargins(0, 0, 0, 0)
         h_layout.setSpacing(0)
 
@@ -227,6 +240,12 @@ class MainWindow(QMainWindow):
         v_layout.addWidget(self._header)
         v_layout.addWidget(self._stack, 1)
         h_layout.addWidget(content, 1)
+
+        main_v.addWidget(body, 1)
+
+        # ── Frameless window + drop shadow ───────────────────
+        self.init_frameless(self._custom_titlebar)
+        self._grip = CustomGrip(self)
 
     # ── Page management ───────────────────────────────────────
 
@@ -693,3 +712,20 @@ class MainWindow(QMainWindow):
             self.dock_all()
             self._tray.hide()
             super().closeEvent(event)
+
+    # ── Frameless event delegation ───────────────────────────
+
+    def nativeEvent(self, event_type, message):
+        result = self._frameless_nativeEvent(event_type, message)
+        if result is not None:
+            return result
+        return super().nativeEvent(event_type, message)
+
+    def changeEvent(self, event):
+        self._frameless_changeEvent(event)
+        super().changeEvent(event)
+
+    def contextMenuEvent(self, event):
+        if self._frameless_contextMenuEvent(event):
+            return
+        super().contextMenuEvent(event)

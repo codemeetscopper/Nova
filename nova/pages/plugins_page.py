@@ -19,6 +19,19 @@ _COLOR_CRASHED = "#EF4444"
 
 _BTN = 24  # unified icon-button size
 
+# Fixed pop colours for action buttons in the plugin list view
+_ICON_COLORS = {
+    "play":            "#22C55E",  # green
+    "stop":            "#EF4444",  # red
+    "extension":       "#3B82F6",  # blue
+    "refresh":         "#F59E0B",  # amber
+    "favorite":        "#EC4899",  # pink
+    "favorite_border": "#EC4899",  # pink
+    "info":            "#6366F1",  # indigo
+    "backup":          "#14B8A6",  # teal
+    "delete":          "#EF4444",  # red
+}
+
 
 def _fg1_color() -> str:
     try:
@@ -307,6 +320,15 @@ class PluginListItem(QFrame):
         self._delete_btn.setObjectName("DeleteButton")
         self._delete_btn.clicked.connect(lambda: self.delete_clicked.emit(manifest.id))
 
+        # Apply pop colours
+        for btn, name in [
+            (self._play_btn, "play"), (self._stop_btn, "stop"),
+            (self._view_btn, "extension"), (self._reload_btn, "refresh"),
+            (self._info_btn, "info"), (self._export_btn, "backup"),
+            (self._delete_btn, "delete"),
+        ]:
+            _refresh_icon(btn, name, _BTN, _ICON_COLORS.get(name))
+
         # Store for icon refresh
         self._icon_btns: List[Tuple[QPushButton, str]] = [
             (self._play_btn,   "play"),
@@ -369,16 +391,9 @@ class PluginListItem(QFrame):
 
     def refresh_icons(self) -> None:
         for btn, name in self._icon_btns:
-            _refresh_icon(btn, name, _BTN)
+            _refresh_icon(btn, name, _BTN, _ICON_COLORS.get(name))
         self._update_fav_icon()
-        # Re-render plugin icon
-        color = _fg2_color()
-        status_text = self._status_lbl.text()
-        if status_text == "Online":
-            color = _COLOR_RUNNING
-        elif status_text == "Crashed":
-            color = _COLOR_CRASHED
-        self._set_plugin_icon(color)
+        self._set_plugin_icon()
 
     def matches_filter(self, search: str, category: str) -> bool:
         """Return True if this item matches the current filter criteria."""
@@ -396,15 +411,15 @@ class PluginListItem(QFrame):
 
     # ── Internal ──────────────────────────────────────────────
 
-    def _set_plugin_icon(self, color: str):
-        px = _render_plugin_icon(self._icon_str, color, 20)
+    def _set_plugin_icon(self):
+        px = _render_plugin_icon(self._icon_str, _accent_color(), 20)
         if px and not px.isNull():
             self._icon_lbl.setPixmap(px)
         else:
             self._icon_lbl.setText("?")
 
     def _apply_status(self, text: str, color: str) -> None:
-        self._set_plugin_icon(color)
+        self._set_plugin_icon()
         self._status_lbl.setText(text)
         weight = "600" if text != "Offline" else "400"
         self._status_lbl.setStyleSheet(
@@ -418,8 +433,7 @@ class PluginListItem(QFrame):
         icon = "favorite" if self._is_favorite else "favorite_border"
         tip = "Remove from sidebar" if self._is_favorite else "Pin to sidebar"
         self._fav_btn.setToolTip(tip)
-        color = _accent_color() if self._is_favorite else _fg1_color()
-        _refresh_icon(self._fav_btn, icon, _BTN, color)
+        _refresh_icon(self._fav_btn, icon, _BTN, _ICON_COLORS.get(icon))
 
 
 # Keep backward-compat alias for main_window.py imports

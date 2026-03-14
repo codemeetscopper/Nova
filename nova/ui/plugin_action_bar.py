@@ -10,8 +10,8 @@ from PySide6.QtWidgets import (
 
 _log = logging.getLogger(__name__)
 
-_BTN_SIZE = 30
-_ICON_SIZE = 16
+_BTN_SIZE = 20
+_ICON_SIZE = 20
 
 
 def _fg1() -> str:

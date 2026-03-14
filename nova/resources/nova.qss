@@ -37,6 +37,30 @@ QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0; }
 /* ─── Main window ────────────────────────────────────────── */
 QMainWindow, #NovaMainWindow { background-color: <bg>; }
 #CentralWidget { background-color: <bg>; }
+#BodyWidget { background-color: <bg>; }
+
+/* ─── Custom titlebar ────────────────────────────────────── */
+#custom_titlebar {
+    background-color: <bg1>;
+    border-bottom: 1px solid <bg2>;
+}
+#titlebar_icon { background: transparent; }
+#titlebar_title { background: transparent; }
+#minimizebtn, #maximizebtn, #closebtn {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    min-width: 46px;
+    max-width: 46px;
+    min-height: 36px;
+    max-height: 36px;
+    padding: 0;
+    font-family: "Segoe MDL2 Assets";
+    font-size: 10px;
+    color: <fg>;
+}
+#minimizebtn:hover, #maximizebtn:hover { background: <bg2>; }
+#closebtn:hover { background: #E81123; color: white; }
 
 /* ─── Sidebar ────────────────────────────────────────────── */
 #Sidebar {
